@@ -38,12 +38,22 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MAttachment;
+import org.compiere.model.MBPartner;
 import org.compiere.model.MBank;
 import org.compiere.model.MBankAccount;
+import org.compiere.model.MCharge;
 import org.compiere.model.MClient;
+import org.compiere.model.MCountry;
+import org.compiere.model.MDocType;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceLine;
+import org.compiere.model.MLocation;
 import org.compiere.model.MOrg;
+import org.compiere.model.MPaymentTerm;
+import org.compiere.model.MProduct;
+import org.compiere.model.MTax;
+import org.compiere.model.MUOM;
+import org.compiere.model.MUser;
 import org.compiere.print.MPrintFormat;
 import org.compiere.print.ReportEngine;
 import org.compiere.process.ProcessInfo;
@@ -55,11 +65,15 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
+import org.mustangproject.BankDetails;
+import org.mustangproject.Contact;
+import org.mustangproject.Invoice;
+import org.mustangproject.Item;
+import org.mustangproject.Product;
+import org.mustangproject.TradeParty;
 import org.mustangproject.ZUGFeRD.IZUGFeRDPaymentDiscountTerms;
 import org.mustangproject.ZUGFeRD.IZUGFeRDPaymentTerms;
 import org.mustangproject.ZUGFeRD.ZUGFeRDExporterFromA1;
-
-import org.mustangproject.*;
 
 
 public class ZUGFeRD extends SvrProcess {
@@ -77,7 +91,9 @@ public class ZUGFeRD extends SvrProcess {
 	List<ProcessInfoParameter>  paraInvoiceX = new ArrayList<ProcessInfoParameter>();;
 
 	HashMap<String, Object> params = new HashMap<String, Object>();
-	
+
+	final static String sqlduedate = "SELECT PaymentTermDueDate(?,?) FROM Dual";
+
 	@Override
 	protected void prepare() {
 		
@@ -164,15 +180,16 @@ public class ZUGFeRD extends SvrProcess {
     	if((baccount.getIBAN()==null)||(bank.getRoutingNo()==null)||(bank.getName()==null))
     		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Check your Bankdetails !"));
     	
-    	
-    	boolean isARC = (m_invoice.getC_DocType().getDocBaseType().equals("ARC"))?true:false;
+    	MDocType docType = MDocType.get(m_invoice.getC_DocType_ID());
+    	boolean isARC = (docType.getDocBaseType().equals(MInvoice.DOCBASETYPE_ARCreditMemo));
     	
     	ZUGFeRDExporterFromA1 ze = new ZUGFeRDExporterFromA1();
     	
     	MClient client = new MClient(Env.getCtx(), Env.getAD_Client_ID(getCtx()), null);
     	
     	ze.setProducer(client.getName());
-    	ze.setCreator(((m_invoice.getAD_User().getBPName()==null)?"":m_invoice.getAD_User().getBPName()));
+    	MUser invoiceUser = MUser.get(m_invoice.getAD_User_ID());
+    	ze.setCreator(((invoiceUser.getBPName()==null)?"":invoiceUser.getBPName()));
 
     	ze.ignorePDFAErrors();
     	ze.load(printfile.getAbsolutePath());
@@ -186,33 +203,33 @@ public class ZUGFeRD extends SvrProcess {
     	
     	invoice.setPaymentTerms(pt);
     	
-    	String sqlduedate = "select * from 	paymenttermduedate("
-    			+ String.valueOf(m_invoice.getC_PaymentTerm_ID())+ ","
-    			+ "'" + String.valueOf(m_invoice.getDateInvoiced()) + "')";
-    	Timestamp duedate = DB.getSQLValueTSEx(m_invoice.get_TrxName(), sqlduedate);
+    	Timestamp duedate = DB.getSQLValueTSEx(m_invoice.get_TrxName(), sqlduedate, m_invoice.getC_PaymentTerm_ID(), m_invoice.getDateInvoiced());
 
     	invoice.setDueDate(duedate);
-    	invoice.setPaymentTermDescription(m_invoice.getC_PaymentTerm().getName());
+    	MPaymentTerm paymentTerm = new MPaymentTerm(getCtx(), m_invoice.getC_PaymentTerm_ID(), get_TrxName());
+    	invoice.setPaymentTermDescription(paymentTerm.getName());
     	invoice.setIssueDate(m_invoice.getDateInvoiced());
     	invoice.setDeliveryDate(m_invoice.getDateInvoiced());
     	invoice.setNumber(m_invoice.getDocumentNo());
     	
     	MOrg org = new MOrg(Env.getCtx(), m_invoice.getAD_Org_ID(), null);
     	StringBuilder addressSender = new StringBuilder();
-    	if(org.getInfo().getC_Location().getAddress1()!=null)
-    		addressSender.append(org.getInfo().getC_Location().getAddress1());
-    	if(org.getInfo().getC_Location().getAddress2()!=null)
-    		addressSender.append(org.getInfo().getC_Location().getAddress2());
-    	if(org.getInfo().getC_Location().getAddress3()!=null)
-    		addressSender.append(org.getInfo().getC_Location().getAddress3());
-    	if(org.getInfo().getC_Location().getAddress4()!=null)
-    		addressSender.append(org.getInfo().getC_Location().getAddress4());
+    	MLocation orgLocation = MLocation.get(org.getInfo().getC_Location_ID());
+    	if(orgLocation.getAddress1()!=null)
+    		addressSender.append(orgLocation.getAddress1());
+    	if(orgLocation.getAddress2()!=null)
+    		addressSender.append(orgLocation.getAddress2());
+    	if(orgLocation.getAddress3()!=null)
+    		addressSender.append(orgLocation.getAddress3());
+    	if(orgLocation.getAddress4()!=null)
+    		addressSender.append(orgLocation.getAddress4());
 
+    	MCountry orgCountry = MCountry.get(orgLocation.getC_Country_ID());
     	TradeParty tradePartySender = new TradeParty(client.getName(), 
     			addressSender.toString(), 
-    			org.getInfo().getC_Location().getPostal(), 
-    			org.getInfo().getC_Location().getCity(), 
-    			org.getInfo().getC_Location().getC_Country().getCountryCode());
+    			orgLocation.getPostal(), 
+    			orgLocation.getCity(), 
+    			orgCountry.getCountryCode());
     	
     	tradePartySender.addVATID(org.getInfo().getTaxID());
     	    	
@@ -222,28 +239,31 @@ public class ZUGFeRD extends SvrProcess {
     	tradePartySender.addBankDetails(bankd);
     	
     	StringBuilder addressRecipient = new StringBuilder();
-    	if(m_invoice.getC_BPartner_Location().getC_Location().getAddress1()!=null)
-    		addressRecipient.append(m_invoice.getC_BPartner_Location().getC_Location().getAddress1());
-    	if(m_invoice.getC_BPartner_Location().getC_Location().getAddress2()!=null)
-    		addressRecipient.append(m_invoice.getC_BPartner_Location().getC_Location().getAddress2());
-    	if(m_invoice.getC_BPartner_Location().getC_Location().getAddress3()!=null)
-    		addressRecipient.append(m_invoice.getC_BPartner_Location().getC_Location().getAddress3());
-    	if(m_invoice.getC_BPartner_Location().getC_Location().getAddress4()!=null)
-    		addressRecipient.append(m_invoice.getC_BPartner_Location().getC_Location().getAddress4());
+    	MLocation bpLocation = MLocation.get(m_invoice.getC_BPartner_Location_ID());
+    	if(bpLocation.getAddress1()!=null)
+    		addressRecipient.append(bpLocation.getAddress1());
+    	if(bpLocation.getAddress2()!=null)
+    		addressRecipient.append(bpLocation.getAddress2());
+    	if(bpLocation.getAddress3()!=null)
+    		addressRecipient.append(bpLocation.getAddress3());
+    	if(bpLocation.getAddress4()!=null)
+    		addressRecipient.append(bpLocation.getAddress4());
     	
+    	MBPartner bp = MBPartner.get(getCtx(), m_invoice.getC_BPartner_ID());
+    	MCountry bpCountry = MCountry.get(bpLocation.getC_Country_ID());
     	TradeParty tradePartyRecipient = new TradeParty(
-    			m_invoice.getC_BPartner().getName()
-    			+ ((m_invoice.getC_BPartner().getName2()==null)?"":", "+ m_invoice.getC_BPartner().getName2()), 
+    			bp.getName()
+    			+ ((bp.getName2()==null)?"":", "+ bp.getName2()), 
     			addressRecipient.toString(),
-    			(m_invoice.getC_BPartner_Location().getC_Location().getPostal()==null)?"":m_invoice.getC_BPartner_Location().getC_Location().getPostal(),
-    			(m_invoice.getC_BPartner_Location().getC_Location().getCity()==null)?"":m_invoice.getC_BPartner_Location().getC_Location().getCity(),
-    			(m_invoice.getC_BPartner_Location().getC_Location().getC_Country().getCountryCode()==null)?"":m_invoice.getC_BPartner_Location().getC_Location().getC_Country().getCountryCode()
+    			(bpLocation.getPostal()==null)?"":bpLocation.getPostal(),
+    			(bpLocation.getCity()==null)?"":bpLocation.getCity(),
+    			(bpCountry.getCountryCode()==null)?"":bpCountry.getCountryCode()
     			);
-    	tradePartyRecipient.addVATID(m_invoice.getC_BPartner().getTaxID());
+    	tradePartyRecipient.addVATID(bp.getTaxID());
     	
-    	Contact contact = new Contact((m_invoice.getAD_User().getName()==null)?"":m_invoice.getAD_User().getName(), 
-    			(m_invoice.getAD_User().getPhone()==null)?"":m_invoice.getAD_User().getPhone(),
-    			(m_invoice.getAD_User().getEMail()==null)?"":m_invoice.getAD_User().getEMail());
+    	Contact contact = new Contact((invoiceUser.getName()==null)?"":invoiceUser.getName(), 
+    			(invoiceUser.getPhone()==null)?"":invoiceUser.getPhone(),
+    			(invoiceUser.getEMail()==null)?"":invoiceUser.getEMail());
     	tradePartyRecipient.setContact(contact);
 
     	invoice.setSender(tradePartySender);
@@ -259,14 +279,11 @@ public class ZUGFeRD extends SvrProcess {
 		for (MInvoiceLine invoiceLine : m_invoice.getLines()) {
 
 			Item item = new Item();
-			
-			String sql = "select x12de355 from c_uom where c_uom_id="
-						+ String.valueOf(invoiceLine.getC_UOM_ID());
-			
-			String uom = DB.getSQLValueString(invoiceLine.get_TrxName(), sql);
-			
-			
-			if ((invoiceLine.isDescription())||((invoiceLine.getM_Product() != null)&&(invoiceLine.getCharge() != null))) {
+
+			MUOM unitOfMeasure = MUOM.get(invoiceLine.getC_UOM_ID());
+			String uom = unitOfMeasure.getX12DE355();
+
+			if (invoiceLine.isDescription() || (invoiceLine.getM_Product_ID() == 0 && invoiceLine.getC_Charge_ID() == 0)) {
 
 				Product product = new Product();
 				product.setName("Descriptionline");
@@ -286,11 +303,13 @@ public class ZUGFeRD extends SvrProcess {
 			} else if (invoiceLine.getM_Product_ID() > 0) {
 				
 				Product product = new Product();
-				product.setName(invoiceLine.getM_Product().getValue());
+				MProduct productLine = MProduct.get(invoiceLine.getM_Product_ID());
+				product.setName(productLine.getValue());
 				product.setDescription((invoiceLine.getDescription()==null?"":invoiceLine.getDescription()));
-				product.setVATPercent(invoiceLine.getC_Tax().getRate());
+				MTax tax = MTax.get(invoiceLine.getC_Tax_ID());
+				product.setVATPercent(tax.getRate());
 				product.setUnit(uom);
-				product.setSellerAssignedID(invoiceLine.getM_Product().getValue());
+				product.setSellerAssignedID(productLine.getValue());
 
 				item.setProduct(product);
 				if(isARC)
@@ -305,9 +324,11 @@ public class ZUGFeRD extends SvrProcess {
 			} else if (invoiceLine.getC_Charge_ID() > 0) {
 				
 				Product product = new Product();
-				product.setName(invoiceLine.getC_Charge().getName());
+				MCharge charge = MCharge.get(invoiceLine.getC_Charge_ID());
+				product.setName(charge.getName());
 				product.setDescription((invoiceLine.getDescription()==null?"":invoiceLine.getDescription()));
-				product.setVATPercent(invoiceLine.getC_Tax().getRate());
+				MTax tax = MTax.get(invoiceLine.getC_Tax_ID());
+				product.setVATPercent(tax.getRate());
 				product.setUnit("C62");
 
 				item.setProduct(product);
@@ -355,14 +376,11 @@ public class ZUGFeRD extends SvrProcess {
     		inv=minv;
     		
     		if(inv != null) {
-    			
-    			if(inv.getC_PaymentTerm().getDiscount().compareTo(Env.ZERO)>0)
+    	    	MPaymentTerm paymentTerm = new MPaymentTerm(inv.getCtx(), inv.getC_PaymentTerm_ID(), inv.get_TrxName());
+    			if(paymentTerm.getDiscount().compareTo(Env.ZERO)>0)
     				pt = new patdiscountterms(inv);
-    			else {
-    				String sqlduedate = "select * from 	paymenttermduedate(" + String.valueOf(inv.getC_PaymentTerm_ID())+ ","
-    						+ "'" + String.valueOf(inv.getDateInvoiced()) + "')";  
-    				duedate = DB.getSQLValueTSEx(inv.get_TrxName(), sqlduedate);
-    			}
+    			else
+    				duedate = DB.getSQLValueTSEx(inv.get_TrxName(), sqlduedate, inv.getC_PaymentTerm_ID(), inv.getDateInvoiced());
     		}
  		
     	}
@@ -379,7 +397,8 @@ public class ZUGFeRD extends SvrProcess {
 			
 //			return "#SKONTO#TAGE=" + days + "#PROZENT=" + dpercent + "#BASISBETRAG=" + dbaseamt + "#";
 			
-			return inv.getC_PaymentTerm().getDescription();
+	    	MPaymentTerm paymentTerm = new MPaymentTerm(inv.getCtx(), inv.getC_PaymentTerm_ID(), inv.get_TrxName());
+			return paymentTerm.getDescription();
 			
 		}
 		
@@ -408,9 +427,10 @@ public class ZUGFeRD extends SvrProcess {
 		@Override
 		public BigDecimal getCalculationPercentage() {
 			
-    		if(inv != null) 
-    			return inv.getC_PaymentTerm().getDiscount();
-    		else
+    		if(inv != null) {
+    	    	MPaymentTerm paymentTerm = new MPaymentTerm(inv.getCtx(), inv.getC_PaymentTerm_ID(), inv.get_TrxName());
+    			return paymentTerm.getDiscount();
+    		} else
     			return null;
 		}
 
