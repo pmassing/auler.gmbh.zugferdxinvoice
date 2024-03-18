@@ -1,17 +1,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>auler.gmbh.zugferdxinvoice</groupId>
-  <artifactId>auler.gmbh.zugferdxinvoice</artifactId>
-  <version>10.0.0-SNAPSHOT</version>
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>auler.gmbh.zugferdxinvoice</groupId>
+	<artifactId>auler.gmbh.zugferdxinvoice</artifactId>
+	<version>10.0.0-SNAPSHOT</version>
+	<packaging>jar</packaging>
 
-	<packaging>eclipse-plugin</packaging>
-
-  <parent>
-	<groupId>org.idempiere</groupId>
-	<artifactId>org.idempiere.parent</artifactId>
-	<version>${revision}</version>
-	<relativePath>../../idempiere/org.idempiere.parent/pom.xml</relativePath>
-	</parent>
+	<properties>
+		<tycho.extras.version>${tycho.version}</tycho.extras.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<idempiere.core.repository.url>file:///${env.IDEMPIERE_SOURCE}/org.idempiere.p2/target/repository</idempiere.core.repository.url>
+	</properties>
 
 	<build>
 		<plugins>
