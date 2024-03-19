@@ -39,6 +39,7 @@ import java.util.logging.Level;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MAttachment;
 import org.compiere.model.MBPartner;
+import org.compiere.model.MBPartnerLocation;
 import org.compiere.model.MBank;
 import org.compiere.model.MBankAccount;
 import org.compiere.model.MCharge;
@@ -239,24 +240,26 @@ public class ZUGFeRD extends SvrProcess {
     	tradePartySender.addBankDetails(bankd);
     	
     	StringBuilder addressRecipient = new StringBuilder();
-    	MLocation bpLocation = MLocation.get(m_invoice.getC_BPartner_Location_ID());
-    	if(bpLocation.getAddress1()!=null)
-    		addressRecipient.append(bpLocation.getAddress1());
-    	if(bpLocation.getAddress2()!=null)
-    		addressRecipient.append(bpLocation.getAddress2());
-    	if(bpLocation.getAddress3()!=null)
-    		addressRecipient.append(bpLocation.getAddress3());
-    	if(bpLocation.getAddress4()!=null)
-    		addressRecipient.append(bpLocation.getAddress4());
     	
+    	MBPartnerLocation bpLocation = new MBPartnerLocation(getCtx(), m_invoice.getC_BPartner_Location_ID(), null);
+    	MLocation location = bpLocation.getLocation(true);
+    	if(location.getAddress1()!=null)
+    		addressRecipient.append(location.getAddress1());
+    	if(location.getAddress2()!=null)
+    		addressRecipient.append(location.getAddress2());
+    	if(location.getAddress3()!=null)
+    		addressRecipient.append(location.getAddress3());
+    	if(location.getAddress4()!=null)
+    		addressRecipient.append(location.getAddress4());
+
     	MBPartner bp = MBPartner.get(getCtx(), m_invoice.getC_BPartner_ID());
-    	MCountry bpCountry = MCountry.get(bpLocation.getC_Country_ID());
+    	MCountry bpCountry = MCountry.get(location.getC_Country_ID());
     	TradeParty tradePartyRecipient = new TradeParty(
     			bp.getName()
     			+ ((bp.getName2()==null)?"":", "+ bp.getName2()), 
     			addressRecipient.toString(),
-    			(bpLocation.getPostal()==null)?"":bpLocation.getPostal(),
-    			(bpLocation.getCity()==null)?"":bpLocation.getCity(),
+    			(location.getPostal()==null)?"":location.getPostal(),
+    			(location.getCity()==null)?"":location.getCity(),
     			(bpCountry.getCountryCode()==null)?"":bpCountry.getCountryCode()
     			);
     	tradePartyRecipient.addVATID(bp.getTaxID());
