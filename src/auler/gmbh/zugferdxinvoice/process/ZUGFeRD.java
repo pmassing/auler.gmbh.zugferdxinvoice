@@ -81,6 +81,7 @@ public class ZUGFeRD extends SvrProcess {
 
 	String PRINTFORMATNAME = "ZUGFeRD";
 	String FILE_SUFFIX="pdf";
+	String CD_UOM="C62";
 	Integer ad_Process_ID = 0;
 	File printfile = new File("");
 	Integer c_Bank_ID = 0;
@@ -284,7 +285,7 @@ public class ZUGFeRD extends SvrProcess {
 			Item item = new Item();
 
 			MUOM unitOfMeasure = MUOM.get(invoiceLine.getC_UOM_ID());
-			String uom = unitOfMeasure.getX12DE355();
+			String uom = unitOfMeasure.getUNCEFACT();
 
 			if (invoiceLine.isDescription() || (invoiceLine.getM_Product_ID() == 0 && invoiceLine.getC_Charge_ID() == 0)) {
 
@@ -292,7 +293,7 @@ public class ZUGFeRD extends SvrProcess {
 				product.setName("Descriptionline");
 				product.setDescription((invoiceLine.getDescription()==null?"":invoiceLine.getDescription()));
 				product.setVATPercent(Env.ZERO);
-				product.setUnit("C62");
+				product.setUnit(CD_UOM);
 				
 				item.setProduct(product);
 				item.setQuantity(Env.ZERO);
@@ -332,7 +333,7 @@ public class ZUGFeRD extends SvrProcess {
 				product.setDescription((invoiceLine.getDescription()==null?"":invoiceLine.getDescription()));
 				MTax tax = MTax.get(invoiceLine.getC_Tax_ID());
 				product.setVATPercent(tax.getRate());
-				product.setUnit("C62");
+				product.setUnit(CD_UOM);
 
 				item.setProduct(product);
 				if(isARC)
