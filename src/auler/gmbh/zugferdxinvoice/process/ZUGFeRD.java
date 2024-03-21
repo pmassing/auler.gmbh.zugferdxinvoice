@@ -55,6 +55,7 @@ import org.compiere.model.MProduct;
 import org.compiere.model.MTax;
 import org.compiere.model.MUOM;
 import org.compiere.model.MUser;
+import org.compiere.model.Query;
 import org.compiere.print.MPrintFormat;
 import org.compiere.print.ReportEngine;
 import org.compiere.process.ProcessInfo;
@@ -84,8 +85,6 @@ public class ZUGFeRD extends SvrProcess {
 	String CD_UOM="C62";
 	Integer ad_Process_ID = 0;
 	File printfile = new File("");
-	Integer c_Bank_ID = 0;
-	Integer c_BankAccount_ID = 0;
 	MInvoice m_invoice = null;
     Trx trx = null;
     CLogger log = CLogger.getCLogger(ZUGFeRD.class);
@@ -98,17 +97,6 @@ public class ZUGFeRD extends SvrProcess {
 
 	@Override
 	protected void prepare() {
-		
-		for (ProcessInfoParameter para : getParameter()) {
-			
-			if(para.getParameterName().equals("C_Bank_ID"))
-				c_Bank_ID = para.getParameterAsInt();
-			
-			if(para.getParameterName().equals("C_BankAccount_ID"))
-				c_BankAccount_ID = para.getParameterAsInt();
-
-		}
-		
 	}
 
 	@Override
@@ -167,8 +155,20 @@ public class ZUGFeRD extends SvrProcess {
 	
 	// #3 start creation of ZUGFeRD xml and pdf
     private void createInvoice() throws IOException {
-    	
-    	
+
+    	// BankDetails
+    	// Own bank and bank accound defined
+    	String bAccountSQL="IsDefault='Y' AND C_Bank_ID  IN "
+    			+ "(SELECT C_Bank_ID FROM C_Bank WHERE IsOwnBank='Y' AND AD_Client_ID=" + this.getAD_Client_ID() + ")";
+		MBankAccount bAccount = new Query(getCtx(), MBankAccount.Table_Name,
+				bAccountSQL, null).setOrderBy("Updated DESC").first();
+		if (bAccount == null)
+    		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "No default bank account found !"));
+		MBank bank = new MBank(Env.getCtx(), bAccount.getC_Bank_ID(), null);			
+		if((bAccount.getIBAN()==null) || (bank.getRoutingNo()==null))
+    		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Own Bank IBAN or RoutingNo empty!"));
+
+		//Invoice is posted
     	if(!m_invoice.isPosted())
     		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Document not posted !"));
     	
@@ -176,11 +176,6 @@ public class ZUGFeRD extends SvrProcess {
     	if(m_invoice.getPOReference() == null)
     		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Insert POReference !"));
     	
-    	//Bank Details
-    	MBank bank = new MBank(Env.getCtx(), c_Bank_ID, null);
-    	MBankAccount baccount = new MBankAccount(Env.getCtx(), c_BankAccount_ID, null);
-    	if((baccount.getIBAN()==null)||(bank.getRoutingNo()==null)||(bank.getName()==null))
-    		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Check your Bankdetails !"));
     	
     	MDocType docType = MDocType.get(m_invoice.getC_DocType_ID());
     	boolean isARC = (docType.getDocBaseType().equals(MInvoice.DOCBASETYPE_ARCreditMemo));
@@ -234,12 +229,12 @@ public class ZUGFeRD extends SvrProcess {
     			orgCountry.getCountryCode());
     	
     	tradePartySender.addVATID(org.getInfo().getTaxID());
-    	    	
-    	BankDetails bankd = new BankDetails(baccount.getIBAN(), bank.getRoutingNo());
-    	bankd.setAccountName(bank.getName());
 
-    	tradePartySender.addBankDetails(bankd);
-    	
+    	//Bank Details
+		BankDetails bankd = new BankDetails(bAccount.getIBAN(), bank.getRoutingNo());
+		bankd.setAccountName(bank.getName());
+		tradePartySender.addBankDetails(bankd);
+		
     	StringBuilder addressRecipient = new StringBuilder();
     	
     	MBPartnerLocation bpLocation = new MBPartnerLocation(getCtx(), m_invoice.getC_BPartner_Location_ID(), null);
