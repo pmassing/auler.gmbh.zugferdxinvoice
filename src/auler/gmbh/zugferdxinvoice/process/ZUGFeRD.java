@@ -52,6 +52,7 @@ import org.compiere.model.MLocation;
 import org.compiere.model.MOrg;
 import org.compiere.model.MPaymentTerm;
 import org.compiere.model.MProduct;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.MTax;
 import org.compiere.model.MUOM;
 import org.compiere.model.MUser;
@@ -167,9 +168,9 @@ public class ZUGFeRD extends SvrProcess {
 	
 	// #3 start creation of ZUGFeRD xml and pdf
     private void createInvoice() throws IOException {
-    	
-    	
-    	if(!m_invoice.isPosted())
+
+    	boolean errorIfNotPosted = MSysConfig.getBooleanValue("ZUGFERD_ERROR_IF_NOT_POSTED", false, m_invoice.getAD_Client_ID(), m_invoice.getAD_Org_ID());
+    	if(errorIfNotPosted && !m_invoice.isPosted())
     		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Document not posted !"));
     	
     	//Leitweg-ID
