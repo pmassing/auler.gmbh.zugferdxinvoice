@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry exported="true" kind="lib" path="lib/preflight-2.0.30.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/pdfbox-2.0.30.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/xmpbox-2.0.30.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/batik-all-1.17.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/xmlgraphics-commons-2.6.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/xmlresolver-6.0.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/Saxon-HE-12.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jakarta.xml.bind-api-4.0.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/fop-2.8.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/dom4j-2.1.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-io-2.16.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/angus-activation-2.0.2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11">
 		<attributes>
 			<attribute name="module" value="true"/>
@@ -10,8 +22,5 @@
 	<classpathentry kind="src" path="src/"/>
 	<classpathentry exported="true" kind="lib" path="lib/library-2.10.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/validator-2.10.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/pdfbox-2.0.30.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/xmpbox-2.0.30.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/preflight-2.0.30.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

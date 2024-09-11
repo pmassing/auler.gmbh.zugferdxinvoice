@@ -364,8 +364,6 @@ public class ZUGFeRD extends SvrProcess {
 		MAttachment atmt = m_invoice.createAttachment();
 		atmt.addEntry(printdstfile);
 		atmt.saveEx();
-		
-		getProcessInfo().getProcessUI().download(printdstfile);
 
     }
     
