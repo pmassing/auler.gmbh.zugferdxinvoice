@@ -132,6 +132,14 @@ public class ZugFerdGenerator {
 		generateLines(ze, zugFerdInvoice);
 		exportFile(ze, zugFerdInvoice, pdfFile);
 	}
+	
+	public void loadFile(ZUGFeRDExporterFromA1 ze, File pdfFile) {
+		try {
+			ze.load(pdfFile.getAbsolutePath());
+		} catch (IOException e) {
+			throw new AdempiereException("Error while loading file: " + pdfFile.getAbsolutePath());
+		}
+	}
 
 	private void generateHeader(ZUGFeRDExporterFromA1 ze, Invoice zugFerdInvoice) {
 		MClient client = MClient.get(Env.getAD_Client_ID(Env.getCtx()));
@@ -150,20 +158,12 @@ public class ZugFerdGenerator {
 		zugFerdInvoice.setNumber(invoice.getDocumentNo());
 
 		MOrg org = new MOrg(Env.getCtx(), invoice.getAD_Org_ID(), null);
-		StringBuilder addressSender = new StringBuilder();
 		MLocation orgLocation = MLocation.get(org.getInfo().getC_Location_ID());
-		if (orgLocation.getAddress1() != null)
-			addressSender.append(orgLocation.getAddress1());
-		if (orgLocation.getAddress2() != null)
-			addressSender.append(orgLocation.getAddress2());
-		if (orgLocation.getAddress3() != null)
-			addressSender.append(orgLocation.getAddress3());
-		if (orgLocation.getAddress4() != null)
-			addressSender.append(orgLocation.getAddress4());
+		String addressSender = generateAddressString(orgLocation);
 
 		MCountry orgCountry = MCountry.get(orgLocation.getC_Country_ID());
 		TradeParty tradePartySender = new TradeParty(client.getName(), 
-				addressSender.toString(), 
+				addressSender, 
 				orgLocation.getPostal(), 
 				orgLocation.getCity(), 
 				orgCountry.getCountryCode());
@@ -175,25 +175,16 @@ public class ZugFerdGenerator {
 
 		tradePartySender.addBankDetails(bankd);
 
-		StringBuilder addressRecipient = new StringBuilder();
-
 		MBPartnerLocation bpLocation = new MBPartnerLocation(Env.getCtx(), invoice.getC_BPartner_Location_ID(), null);
 		MLocation location = bpLocation.getLocation(true);
-		if (location.getAddress1() != null)
-			addressRecipient.append(location.getAddress1());
-		if (location.getAddress2() != null)
-			addressRecipient.append(location.getAddress2());
-		if (location.getAddress3() != null)
-			addressRecipient.append(location.getAddress3());
-		if (location.getAddress4() != null)
-			addressRecipient.append(location.getAddress4());
+		String addressRecipient = generateAddressString(location);
 
 		MBPartner bp = MBPartner.get(Env.getCtx(), invoice.getC_BPartner_ID());
 		MCountry bpCountry = MCountry.get(location.getC_Country_ID());
 		TradeParty tradePartyRecipient = new TradeParty(
 				bp.getName()
 				+ ((bp.getName2() == null) ? "" : ", "+ bp.getName2()), 
-				addressRecipient.toString(),
+				addressRecipient,
 				(location.getPostal() == null) ? "" : location.getPostal(),
 						(location.getCity() == null) ? "" : location.getCity(),
 								(bpCountry.getCountryCode() == null) ? "" : bpCountry.getCountryCode()
@@ -211,14 +202,19 @@ public class ZugFerdGenerator {
 		//Leitweg-ID
 		zugFerdInvoice.setReferenceNumber(invoice.getPOReference());
 	}
-
-	public void loadFile(ZUGFeRDExporterFromA1 ze, File pdfFile) {
-		try {
-			ze.load(pdfFile.getAbsolutePath());
-		} catch (IOException e) {
-			throw new AdempiereException("Error while loading file: " + pdfFile.getAbsolutePath());
-		}
-
+	
+	private String generateAddressString(MLocation location) {
+		StringBuilder addressSender = new StringBuilder();
+		if (location.getAddress1() != null)
+			addressSender.append(location.getAddress1());
+		if (location.getAddress2() != null)
+			addressSender.append(location.getAddress2());
+		if (location.getAddress3() != null)
+			addressSender.append(location.getAddress3());
+		if (location.getAddress4() != null)
+			addressSender.append(location.getAddress4());
+		
+		return addressSender.toString();
 	}
 
 	private void generateLines(ZUGFeRDExporterFromA1 ze, Invoice zugFerdInvoice) {
