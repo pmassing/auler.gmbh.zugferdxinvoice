@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MAttachment;
@@ -56,11 +55,7 @@ import org.compiere.model.MSysConfig;
 import org.compiere.model.MTax;
 import org.compiere.model.MUOM;
 import org.compiere.model.MUser;
-import org.compiere.print.MPrintFormat;
-import org.compiere.print.ReportEngine;
-import org.compiere.process.ProcessInfo;
 import org.compiere.process.ProcessInfoParameter;
-import org.compiere.process.ServerProcessCtl;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
@@ -80,6 +75,7 @@ import org.mustangproject.ZUGFeRD.ZUGFeRDExporterFromA1;
 
 public class ZUGFeRD extends SvrProcess {
 
+	ZugFerdGenerator zugFerdGenerator;
 	String PRINTFORMATNAME = "ZUGFeRD";
 	String FILE_SUFFIX="pdf";
 	String CD_UOM="C62";
@@ -114,7 +110,8 @@ public class ZUGFeRD extends SvrProcess {
 
 	@Override
 	protected String doIt() throws Exception {
-		
+		m_invoice = MInvoice.get(getRecord_ID());
+		zugFerdGenerator = new ZugFerdGenerator(m_invoice);
 		prepInvoice();
 		
 		createInvoice();
@@ -125,44 +122,7 @@ public class ZUGFeRD extends SvrProcess {
 	
 	// #2 Run printprocess
 	private void prepInvoice() throws Exception {
-
-    	m_invoice =  new MInvoice(getCtx(), getRecord_ID(), get_TrxName());
-    	
-		ReportEngine re = ReportEngine.get(Env.getCtx(), ReportEngine.INVOICE, getRecord_ID());
-		try
-		{
-			MPrintFormat format = re.getPrintFormat();
-			File pdfFile = null;
-			if (format.getJasperProcess_ID() > 0)	
-			{
-				ProcessInfo pi = new ProcessInfo("", format.getJasperProcess_ID());
-				pi.setRecord_ID(getRecord_ID());
-				pi.setIsBatch(true);
-				pi.setParameter(getParameter());
-									
-				ServerProcessCtl.process(pi, null);
-				printfile = pi.getPDFReport();
-			}
-			else
-			{
-
-				pdfFile = File
-						.createTempFile(
-								m_invoice.getDocumentNo(), ".pdf");
-
-				printfile = re.getPDF(pdfFile);
-
-			}
-			
-			log.info(printfile.getName());
-		
-		}
-		catch (Exception e)
-		{
-			log.log(Level.SEVERE, e.getLocalizedMessage(), e);
-			return;
-		}
-		
+		printfile = zugFerdGenerator.generateInvoicePDF();
     }	
 	
 	
