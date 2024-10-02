@@ -28,12 +28,14 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MAttachment;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MPaymentTerm;
 import org.compiere.model.MSysConfig;
@@ -43,23 +45,20 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
-import org.compiere.util.Trx;
 import org.mustangproject.ZUGFeRD.IZUGFeRDPaymentDiscountTerms;
 import org.mustangproject.ZUGFeRD.IZUGFeRDPaymentTerms;
 
 
 public class ZUGFeRD extends SvrProcess {
 
-	ZugFerdGenerator zugFerdGenerator;
+	private ZugFerdGenerator zugFerdGenerator;
 	String PRINTFORMATNAME = "ZUGFeRD";
 	String FILE_SUFFIX="pdf";
-	String CD_UOM="C62";
-	Integer ad_Process_ID = 0;
+
 	File printfile = new File("");
 	Integer c_Bank_ID = 0;
 	Integer c_BankAccount_ID = 0;
 	MInvoice m_invoice = null;
-    Trx trx = null;
     CLogger log = CLogger.getCLogger(ZUGFeRD.class);
     
 	List<ProcessInfoParameter>  paraInvoiceX = new ArrayList<ProcessInfoParameter>();;
@@ -119,7 +118,17 @@ public class ZUGFeRD extends SvrProcess {
     		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Check your Bankdetails !"));
     	
     	zugFerdGenerator.generateAndEmbeddXML(printfile);
+    	
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+		File printdstfile = new File(printfile.getParent()
+				+ "/" + m_invoice.getDocumentNo() +"-" 
+				+ sdf.format(m_invoice.getDateInvoiced())
+				+ "." + FILE_SUFFIX);
+		printfile.renameTo(printdstfile);
 
+		MAttachment atmt = m_invoice.createAttachment();
+		atmt.addEntry(printdstfile);
+		atmt.saveEx();
     }
     
     

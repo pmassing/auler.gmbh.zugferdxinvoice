@@ -25,10 +25,8 @@ import java.io.File;
 import java.io.IOException;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.MAttachment;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MBPartnerLocation;
 import org.compiere.model.MBank;
@@ -67,7 +65,6 @@ public class ZugFerdGenerator {
 	private CLogger log = CLogger.getCLogger(ZugFerdGenerator.class);
 
 	private static final String CD_UOM="C62";
-	private static final String FILE_SUFFIX="pdf";
 
 	private MInvoice invoice;
 	private MBank bank;
@@ -294,17 +291,6 @@ public class ZugFerdGenerator {
 		} catch (IOException e) {
 			throw new AdempiereException(e.getMessage());
 		}
-
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-		File printdstfile = new File(pdfFile.getParent()
-				+ "/" + invoice.getDocumentNo() +"-" 
-				+ sdf.format(invoice.getDateInvoiced())
-				+ "." + FILE_SUFFIX);
-		pdfFile.renameTo(printdstfile);
-
-		MAttachment atmt = invoice.createAttachment();
-		atmt.addEntry(printdstfile);
-		atmt.saveEx();
 	}
 
 }
