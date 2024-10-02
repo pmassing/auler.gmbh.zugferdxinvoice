@@ -162,7 +162,7 @@ public class ZUGFeRD extends SvrProcess {
 		
 		@Override
 		public Date getDueDate() {
-			return null;
+			return duedate;
 		}
 
 		@Override
