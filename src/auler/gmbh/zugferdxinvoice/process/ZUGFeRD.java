@@ -45,6 +45,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.Util;
 import org.mustangproject.ZUGFeRD.IZUGFeRDPaymentDiscountTerms;
 import org.mustangproject.ZUGFeRD.IZUGFeRDPaymentTerms;
 
@@ -111,7 +112,7 @@ public class ZUGFeRD extends SvrProcess {
     		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Document not posted !"));
     	
     	//Leitweg-ID
-    	if(referenceNo == null)
+    	if (Util.isEmpty(referenceNo))
     		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Insert POReference !"));
 
     	zugFerdGenerator.setReferenceNo(referenceNo);

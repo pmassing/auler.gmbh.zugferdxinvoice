@@ -41,6 +41,7 @@ import org.adempiere.webui.component.ListItem;
 import org.adempiere.webui.component.Listbox;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
+import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
@@ -59,12 +60,13 @@ import org.compiere.model.MProcess;
 import org.compiere.process.ProcessInfo;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.ServerProcessCtl;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
-import org.zkoss.zul.Messagebox;
-import org.zkoss.zul.Vbox;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
+import org.zkoss.zul.Messagebox;
+import org.zkoss.zul.Vbox;
 
 
 
@@ -80,6 +82,7 @@ WTableModelListener, ValueChangeListener {
 
 	private Listbox selectExportImport = new Listbox();
 	private Listbox selectBankAccount = new Listbox();
+	private Textbox referenceNumberEditor = new Textbox();
 	
 	private final String PROCESSNAME = "PAT_ZUGFeRD";
 	private final String FILE_SUFFIX="pdf";
@@ -149,6 +152,13 @@ WTableModelListener, ValueChangeListener {
 		}
 		row2.appendCellChild(selectBankAccount);
 		rows.appendChild(row2);
+		
+		Row row3 = new Row();
+		row3.appendChild(new Label(Msg.translate(Env.getCtx(), "PAT_ReferenceNo")));
+		ZKUpdateUtil.setHflex(referenceNumberEditor, "1");
+		referenceNumberEditor.setValue(getDefaultReferenceNo());
+		row3.appendCellChild(referenceNumberEditor);
+		rows.appendChild(row3);
 
 
 		
@@ -162,8 +172,15 @@ WTableModelListener, ValueChangeListener {
 		
 	}
 
+	private String getDefaultReferenceNo() {
+		String defaultReferenceNo = null;
+		int C_BPartner_ID = Env.getContextAsInt(Env.getCtx(), parentTab.getWindowNo(),"C_BPartner_ID");
+		if (C_BPartner_ID > 0) {
+			defaultReferenceNo = DB.getSQLValueString(null, "SELECT ReferenceNo FROM C_BPartner WHERE C_BPartner_ID=?", C_BPartner_ID);
+		}
 
-
+		return defaultReferenceNo;
+	}
 
 	@Override
 	public void onEvent(Event event) throws Exception {
@@ -203,9 +220,13 @@ WTableModelListener, ValueChangeListener {
 
 		ListItem item = selectBankAccount.getSelectedItem();
 		Integer bankAccount_ID = (Integer)item.getValue();
+		String referenceNo = referenceNumberEditor.getValue();				
+		
 		ProcessInfoParameter parameterBank = new ProcessInfoParameter("C_Bank_ID", MBankAccount.get(bankAccount_ID).getC_Bank_ID(), null, null, null);
 		ProcessInfoParameter parameterBankAccount = new ProcessInfoParameter("C_BankAccount_ID", MBankAccount.get(bankAccount_ID).getC_BankAccount_ID(), null, null, null);
-		ProcessInfoParameter[]  paraZUGFeRD = {parameterBank,parameterBankAccount};
+		ProcessInfoParameter parameterReferenceNo = new ProcessInfoParameter("PAT_ReferenceNo", referenceNo, null, null, null);
+		
+		ProcessInfoParameter[]  paraZUGFeRD = {parameterBank,parameterBankAccount,parameterReferenceNo};
 		
 		pi.setParameter(paraZUGFeRD);
 		pi.setRecord_ID(parentTab.getRecord_ID());
