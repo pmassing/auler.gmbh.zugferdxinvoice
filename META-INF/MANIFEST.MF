@@ -3,6 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: ZugferdXInvoice
 Bundle-SymbolicName: auler.gmbh.zugferdxinvoice;singleton:=true
 Bundle-Version: 11.0.0.qualifier
+Export-Package: auler.gmbh.zugferdxinvoice.process
 Bundle-Vendor: Patric Massing(Hans Auler GmbH)
 Automatic-Module-Name: gmbh.auler.zugferdxinvoice
 Bundle-RequiredExecutionEnvironment: JavaSE-17
