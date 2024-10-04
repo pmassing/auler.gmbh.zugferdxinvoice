@@ -69,6 +69,7 @@ public class ZugFerdGenerator {
 	private MInvoice invoice;
 	private MBank bank;
 	private MBankAccount bankAccount;
+	private String referenceNo;
 
 	public ZugFerdGenerator(MInvoice invoice) {
 		this.invoice = invoice;
@@ -102,6 +103,10 @@ public class ZugFerdGenerator {
 		bankAccount = MBankAccount.get(C_BankAccount_ID);
 		if (bankAccount != null && bank == null)
 			setBank(bankAccount.getC_Bank_ID());
+	}
+	
+	public void setReferenceNo(String referenceNo) {
+		this.referenceNo = referenceNo;
 	}
 
 	public boolean isValidBankDetail() {
@@ -197,7 +202,7 @@ public class ZugFerdGenerator {
 		zugFerdInvoice.setRecipient(tradePartyRecipient);
 
 		//Leitweg-ID
-		zugFerdInvoice.setReferenceNumber(invoice.getPOReference());
+		zugFerdInvoice.setReferenceNumber(referenceNo);
 	}
 	
 	private String generateAddressString(MLocation location) {

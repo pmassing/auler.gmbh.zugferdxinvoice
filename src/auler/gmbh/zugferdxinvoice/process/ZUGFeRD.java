@@ -45,6 +45,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.Util;
 import org.mustangproject.ZUGFeRD.IZUGFeRDPaymentDiscountTerms;
 import org.mustangproject.ZUGFeRD.IZUGFeRDPaymentTerms;
 
@@ -58,6 +59,8 @@ public class ZUGFeRD extends SvrProcess {
 	File printfile = new File("");
 	Integer c_Bank_ID = 0;
 	Integer c_BankAccount_ID = 0;
+	String referenceNo = null;
+
 	MInvoice m_invoice = null;
     CLogger log = CLogger.getCLogger(ZUGFeRD.class);
     
@@ -74,9 +77,10 @@ public class ZUGFeRD extends SvrProcess {
 			
 			if(para.getParameterName().equals("C_Bank_ID"))
 				c_Bank_ID = para.getParameterAsInt();
-			
-			if(para.getParameterName().equals("C_BankAccount_ID"))
+			else if(para.getParameterName().equals("C_BankAccount_ID"))
 				c_BankAccount_ID = para.getParameterAsInt();
+			else if (para.getParameterName().equals("PAT_ReferenceNo"))
+				referenceNo = para.getParameterAsString();
 
 		}
 		
@@ -108,15 +112,17 @@ public class ZUGFeRD extends SvrProcess {
     		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Document not posted !"));
     	
     	//Leitweg-ID
-    	if(m_invoice.getPOReference() == null)
+    	if (Util.isEmpty(referenceNo))
     		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Insert POReference !"));
-    	
+
+    	zugFerdGenerator.setReferenceNo(referenceNo);
+
     	//Bank Details
     	zugFerdGenerator.setBank(c_Bank_ID);
     	zugFerdGenerator.setBankAccount(c_BankAccount_ID);
     	if(!zugFerdGenerator.isValidBankDetail())
     		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Check your Bankdetails !"));
-    	
+   	
     	zugFerdGenerator.generateAndEmbeddXML(printfile);
     	
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
