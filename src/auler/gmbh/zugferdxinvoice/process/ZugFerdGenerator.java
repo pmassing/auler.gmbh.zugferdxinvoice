@@ -41,6 +41,7 @@ import org.compiere.model.MLocation;
 import org.compiere.model.MOrg;
 import org.compiere.model.MPaymentTerm;
 import org.compiere.model.MProduct;
+import org.compiere.model.MSystem;
 import org.compiere.model.MTax;
 import org.compiere.model.MUOM;
 import org.compiere.model.MUser;
@@ -121,10 +122,9 @@ public class ZugFerdGenerator {
 
 	private void generateZugFerdXML(File pdfFile) {
 		ZUGFeRDExporterFromA1 ze = new ZUGFeRDExporterFromA1();
-		MClient client = MClient.get(Env.getAD_Client_ID(Env.getCtx()));
-		ze.setProducer(client.getName());
-		MUser invoiceUser = MUser.get(invoice.getAD_User_ID());
-		ze.setCreator(((invoiceUser.getBPName() == null) ? "" : invoiceUser.getBPName()));
+		ze.setProducer(MSystem.get(Env.getCtx()).getName());
+		MUser invoiceUser = MUser.get(invoice.getCreatedBy());
+		ze.setCreator(((invoiceUser.getName() == null) ? "" : invoiceUser.getName()));
 
 		ze.ignorePDFAErrors();
 		loadFile(ze, pdfFile);
