@@ -41,7 +41,7 @@ import org.compiere.model.MLocation;
 import org.compiere.model.MOrg;
 import org.compiere.model.MPaymentTerm;
 import org.compiere.model.MProduct;
-import org.compiere.model.MSystem;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.MTax;
 import org.compiere.model.MUOM;
 import org.compiere.model.MUser;
@@ -51,6 +51,7 @@ import org.compiere.process.ProcessInfo;
 import org.compiere.process.ServerProcessCtl;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.mustangproject.BankDetails;
 import org.mustangproject.Contact;
 import org.mustangproject.Invoice;
@@ -71,6 +72,9 @@ public class ZugFerdGenerator {
 	private MBank bank;
 	private MBankAccount bankAccount;
 	private String referenceNo;
+	
+	private String invoiceProducer;
+	private String invoiceAuthor;
 
 	public ZugFerdGenerator(MInvoice invoice) {
 		this.invoice = invoice;
@@ -122,9 +126,8 @@ public class ZugFerdGenerator {
 
 	private void generateZugFerdXML(File pdfFile) {
 		ZUGFeRDExporterFromA1 ze = new ZUGFeRDExporterFromA1();
-		ze.setProducer(MSystem.get(Env.getCtx()).getName());
-		MUser invoiceUser = MUser.get(invoice.getCreatedBy());
-		ze.setCreator(((invoiceUser.getName() == null) ? "" : invoiceUser.getName()));
+		ze.setProducer(getInvoiceProducer());
+		ze.setCreator(invoiceAuthor);
 
 		ze.ignorePDFAErrors();
 		loadFile(ze, pdfFile);
@@ -296,6 +299,21 @@ public class ZugFerdGenerator {
 		} catch (IOException e) {
 			throw new AdempiereException(e.getMessage());
 		}
+	}
+	
+	public String getInvoiceProducer() {
+		if (Util.isEmpty(invoiceProducer))
+			invoiceProducer = MSysConfig.getValue("ZUGFERD_PRODUCER", "iDempiere", Env.getAD_Client_ID(Env.getCtx()));
+		return invoiceProducer;
+	}
+
+	public void setInvoiceProducer(String invoiceProducer) {
+		this.invoiceProducer = invoiceProducer;
+	}
+
+
+	public void setInvoiceAuthor(String invoiceAuthor) {
+		this.invoiceAuthor = invoiceAuthor;
 	}
 
 }
