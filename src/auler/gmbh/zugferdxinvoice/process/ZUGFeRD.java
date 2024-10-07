@@ -39,6 +39,8 @@ import org.compiere.model.MAttachment;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MPaymentTerm;
 import org.compiere.model.MSysConfig;
+import org.compiere.model.MSystem;
+import org.compiere.model.MUser;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.CLogger;
@@ -117,6 +119,11 @@ public class ZUGFeRD extends SvrProcess {
 
     	zugFerdGenerator.setReferenceNo(referenceNo);
 
+    	//Metadata values
+    	zugFerdGenerator.setInvoiceProducer(MSystem.get(Env.getCtx()).getName());
+		MUser invoiceUser = MUser.get(m_invoice.getCreatedBy());
+		zugFerdGenerator.setInvoiceAuthor(((invoiceUser.getName() == null) ? "" : invoiceUser.getName()));
+		
     	//Bank Details
     	zugFerdGenerator.setBank(c_Bank_ID);
     	zugFerdGenerator.setBankAccount(c_BankAccount_ID);
