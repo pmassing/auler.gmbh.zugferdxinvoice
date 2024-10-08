@@ -176,7 +176,7 @@ WTableModelListener, ValueChangeListener {
 		String defaultReferenceNo = null;
 		int C_BPartner_ID = Env.getContextAsInt(Env.getCtx(), parentTab.getWindowNo(),"C_BPartner_ID");
 		if (C_BPartner_ID > 0) {
-			defaultReferenceNo = DB.getSQLValueString(null, "SELECT ReferenceNo FROM C_BPartner WHERE C_BPartner_ID=?", C_BPartner_ID);
+			defaultReferenceNo = DB.getSQLValueString(null, "SELECT PAT_ReferenceNo FROM C_BPartner WHERE C_BPartner_ID=?", C_BPartner_ID);
 		}
 
 		return defaultReferenceNo;
