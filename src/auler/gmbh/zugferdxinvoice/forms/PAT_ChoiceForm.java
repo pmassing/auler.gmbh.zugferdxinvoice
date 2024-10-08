@@ -26,8 +26,6 @@
 package auler.gmbh.zugferdxinvoice.forms;
 
 
-import java.text.SimpleDateFormat;
-
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.adwindow.ADWindow;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
@@ -51,8 +49,6 @@ import org.adempiere.webui.panel.ADForm;
 import org.adempiere.webui.panel.IFormController;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.compiere.model.GridTab;
-import org.compiere.model.MAttachment;
-import org.compiere.model.MAttachmentEntry;
 import org.compiere.model.MBank;
 import org.compiere.model.MBankAccount;
 import org.compiere.model.MInvoice;
@@ -65,8 +61,11 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
+import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Messagebox;
 import org.zkoss.zul.Vbox;
+
+import auler.gmbh.zugferdxinvoice.utils.FileHelper;
 
 
 
@@ -74,6 +73,9 @@ import org.zkoss.zul.Vbox;
 public class PAT_ChoiceForm implements IFormController, EventListener<Event>, 
 WTableModelListener, ValueChangeListener {
 
+	private static final int CREATE_OPTION = 0;
+	private static final int VIEW_OPTION = 1;
+	
 	private AbstractADWindowContent panel;
 	private Window ZUGFeRDSelect = null;
 	private String tTTButton = "PAT_ZUGFeRDXInvoice";
@@ -84,14 +86,22 @@ WTableModelListener, ValueChangeListener {
 	private Listbox selectBankAccount = new Listbox();
 	private Textbox referenceNumberEditor = new Textbox();
 	
-	private final String PROCESSNAME = "PAT_ZUGFeRD";
-	private final String FILE_SUFFIX="pdf";
+	private Row bankSelectorRow = new Row();
+	private Row referenceNoRow = new Row();
+	private Row fileSourceRow = new Row();
+	private Listbox selectFileSource = new Listbox();
 	
+	private final String PROCESSNAME = "PAT_ZUGFeRD";
+	
+	private FileHelper fileHelper;
 	
 	public PAT_ChoiceForm(AbstractADWindowContent panel, ADWindow window, GridTab tab) {
 
 		this.panel = panel;
 		this.parentTab = tab;
+		
+		fileHelper = new FileHelper(MInvoice.get(parentTab.getRecord_ID()));
+
 		this.show();
 
 	}
@@ -135,8 +145,9 @@ WTableModelListener, ValueChangeListener {
 		selectExportImport.appendItem(Msg.translate(Env.getCtx(), "Create ZUGFeRD"),0);	
 		selectExportImport.appendItem(Msg.translate(Env.getCtx(), "View ZUGFeRD"),1);	
 		row1.appendChild(selectExportImport);
-		Row row2= new Row();
-		row2.appendChild(new Label(Msg.translate(Env.getCtx(), "Bank")));
+		selectExportImport.addEventListener(Events.ON_SELECT, this);
+		
+		bankSelectorRow.appendChild(new Label(Msg.translate(Env.getCtx(), "Bank")));
 		selectBankAccount.setMold("select");
 		selectBankAccount.getItems().clear();
 		ZKUpdateUtil.setHflex(selectBankAccount, "1");
@@ -150,17 +161,22 @@ WTableModelListener, ValueChangeListener {
 			if(MBankAccount.get(bankAccountID).isDefault())
 				selectBankAccount.selectItem(selectBankAccount.getItemAtIndex(selectBankAccount.getItemCount()-1));
 		}
-		row2.appendCellChild(selectBankAccount);
-		rows.appendChild(row2);
+		bankSelectorRow.appendCellChild(selectBankAccount);
+		rows.appendChild(bankSelectorRow);
 		
-		Row row3 = new Row();
-		row3.appendChild(new Label(Msg.translate(Env.getCtx(), "PAT_ReferenceNo")));
+		referenceNoRow.appendChild(new Label(Msg.translate(Env.getCtx(), "PAT_ReferenceNo")));
 		ZKUpdateUtil.setHflex(referenceNumberEditor, "1");
 		referenceNumberEditor.setValue(getDefaultReferenceNo());
-		row3.appendCellChild(referenceNumberEditor);
-		rows.appendChild(row3);
-
-
+		referenceNoRow.appendCellChild(referenceNumberEditor);
+		rows.appendChild(referenceNoRow);
+		
+		fileSourceRow.appendChild(new Label(Msg.translate(Env.getCtx(), "File")));
+		selectFileSource.setMold("select");
+		selectFileSource.getItems().clear();
+		ZKUpdateUtil.setHflex(selectFileSource, "1");
+		fileSourceRow.appendCellChild(selectFileSource);
+		rows.appendChild(fileSourceRow);
+		fileSourceRow.setVisible(false);
 		
 		vb.appendChild(grid);
 
@@ -193,17 +209,26 @@ WTableModelListener, ValueChangeListener {
 			
 			ListItem item = selectExportImport.getSelectedItem();
 			
-			if(item.getValue().equals(0))
+			if(item.getValue().equals(CREATE_OPTION))
 				createZUGFeRD();
 			else
 				viewZUGFeRD();
 			
 			ZUGFeRDSelect.onClose();
 			
+		} else if (Events.ON_SELECT.equals(event.getName())) { // Change Create/View value
+			if (selectExportImport.getSelectedIndex() == CREATE_OPTION) {
+				bankSelectorRow.setVisible(true);
+				referenceNoRow.setVisible(true);
+				fileSourceRow.setVisible(false);
+			} else if (selectExportImport.getSelectedIndex() == VIEW_OPTION) {
+				bankSelectorRow.setVisible(false);
+				referenceNoRow.setVisible(false);
+				populateFileSourceList();
+				fileSourceRow.setVisible(true);
+			}
 		}
-			
 	}
-
 
 	void createZUGFeRD() {
 		
@@ -247,32 +272,32 @@ WTableModelListener, ValueChangeListener {
 
 	
 	boolean IsZUGFeRDCreated() {
-		
-		MInvoice m_invoice = new MInvoice(Env.getCtx(), parentTab.getRecord_ID(),null);
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-		String filename = m_invoice.getDocumentNo() + "-" + sdf.format(m_invoice.getDateInvoiced())	+ "." + FILE_SUFFIX;
-		
-		MAttachment m_attachment = new MAttachment (Env.getCtx(), MInvoice.Table_ID, parentTab.getRecord_ID(), parentTab.getRecord_UU(), null);
-
-		for (MAttachmentEntry entry : m_attachment.getEntries()) {
-			if (entry.getName().equals(filename)){
-			 return true;
-			}
-		}
-		
-		return false;
+		return fileHelper.getDefaultAttachmentFile() != null;
 	}
 	
 	
 	void viewZUGFeRD() {
 		
-		if(IsZUGFeRDCreated())
-			new PAT_Visualize_InvoiceX_Form(panel, parentTab);
-		else
+		if (selectFileSource.getSelectedItem() != null) {
+			new PAT_Visualize_InvoiceX_Form(panel, parentTab, fileHelper, selectFileSource.getSelectedIndex());
+			
+		} else
 			Messagebox.show("No valid ZUGFeRD Invoice found");
 
 	}
 	
+	private void populateFileSourceList() {
+		if (selectFileSource.getItems().isEmpty()) {
+			if (fileHelper.getFiles().isEmpty()) {
+				fileHelper.addAttachmentFiles();
+				fileHelper.addArchivedFiles();
+			}
+			
+			for (int i = 0; i < fileHelper.getFiles().size() ; i++) {
+				selectFileSource.appendItem(fileHelper.getFiles().get(i).getName(), i);
+			}
+		}
+	}
 	
 	@Override
 	public void valueChange(ValueChangeEvent evt) {
