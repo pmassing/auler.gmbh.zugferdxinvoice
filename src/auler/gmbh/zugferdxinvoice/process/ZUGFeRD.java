@@ -114,7 +114,7 @@ public class ZUGFeRD extends SvrProcess {
     		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Document not posted !"));
     	
     	//Leitweg-ID
-    	if (Util.isEmpty(referenceNo))
+    	if (Util.isEmpty(zugFerdGenerator.getReferenceNo()))
     		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Insert POReference !"));
 
     	zugFerdGenerator.setReferenceNo(referenceNo);
