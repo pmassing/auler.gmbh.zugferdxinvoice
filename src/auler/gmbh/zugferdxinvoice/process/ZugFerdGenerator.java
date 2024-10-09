@@ -113,6 +113,14 @@ public class ZugFerdGenerator {
 	public void setReferenceNo(String referenceNo) {
 		this.referenceNo = referenceNo;
 	}
+	
+	public String getReferenceNo() {
+		if (Util.isEmpty(referenceNo)) {
+			MBPartner bp = MBPartner.get(Env.getCtx(), invoice.getC_BPartner_ID());
+			referenceNo = bp.get_ValueAsString("PAT_ReferenceNo");
+		}
+		return referenceNo;
+	}
 
 	public boolean isValidBankDetail() {
 		return bank != null && bankAccount != null && 
@@ -205,7 +213,7 @@ public class ZugFerdGenerator {
 		zugFerdInvoice.setRecipient(tradePartyRecipient);
 
 		//Leitweg-ID
-		zugFerdInvoice.setReferenceNumber(referenceNo);
+		zugFerdInvoice.setReferenceNumber(getReferenceNo());
 	}
 	
 	private String generateAddressString(MLocation location) {

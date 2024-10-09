@@ -28,7 +28,6 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -51,12 +50,13 @@ import org.compiere.util.Util;
 import org.mustangproject.ZUGFeRD.IZUGFeRDPaymentDiscountTerms;
 import org.mustangproject.ZUGFeRD.IZUGFeRDPaymentTerms;
 
+import auler.gmbh.zugferdxinvoice.utils.FileHelper;
+
 
 public class ZUGFeRD extends SvrProcess {
 
 	private ZugFerdGenerator zugFerdGenerator;
 	String PRINTFORMATNAME = "ZUGFeRD";
-	String FILE_SUFFIX="pdf";
 
 	File printfile = new File("");
 	Integer c_Bank_ID = 0;
@@ -114,10 +114,9 @@ public class ZUGFeRD extends SvrProcess {
     		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Document not posted !"));
     	
     	//Leitweg-ID
-    	if (Util.isEmpty(referenceNo))
-    		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Insert POReference !"));
-
     	zugFerdGenerator.setReferenceNo(referenceNo);
+    	if (Util.isEmpty(zugFerdGenerator.getReferenceNo()))
+    		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Insert POReference !"));
 
     	//Metadata values
     	zugFerdGenerator.setInvoiceProducer(MSystem.get(Env.getCtx()).getName());
@@ -132,11 +131,8 @@ public class ZUGFeRD extends SvrProcess {
    	
     	zugFerdGenerator.generateAndEmbeddXML(printfile);
     	
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 		File printdstfile = new File(printfile.getParent()
-				+ "/" + m_invoice.getDocumentNo() +"-" 
-				+ sdf.format(m_invoice.getDateInvoiced())
-				+ "." + FILE_SUFFIX);
+				+ "/" + FileHelper.getDefaultFileName(m_invoice));
 		printfile.renameTo(printdstfile);
 
 		MAttachment atmt = m_invoice.createAttachment();
