@@ -27,6 +27,8 @@ import java.math.RoundingMode;
 import java.sql.Timestamp;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MArchive;
+import org.compiere.model.MAttachment;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MBPartnerLocation;
 import org.compiere.model.MBank;
@@ -45,6 +47,7 @@ import org.compiere.model.MSysConfig;
 import org.compiere.model.MTax;
 import org.compiere.model.MUOM;
 import org.compiere.model.MUser;
+import org.compiere.model.PrintInfo;
 import org.compiere.print.MPrintFormat;
 import org.compiere.print.ReportEngine;
 import org.compiere.process.ProcessInfo;
@@ -61,6 +64,7 @@ import org.mustangproject.TradeParty;
 import org.mustangproject.ZUGFeRD.ZUGFeRDExporterFromA1;
 
 import auler.gmbh.zugferdxinvoice.process.ZUGFeRD.patpaymentterms;
+import auler.gmbh.zugferdxinvoice.utils.FileHelper;
 
 public class ZugFerdGenerator {
 
@@ -130,6 +134,7 @@ public class ZugFerdGenerator {
 
 	public void generateAndEmbeddXML(File pdfFile) throws IOException {
 		generateZugFerdXML(pdfFile);
+		savePdfFile(pdfFile);
 	}
 
 	private void generateZugFerdXML(File pdfFile) {
@@ -307,6 +312,32 @@ public class ZugFerdGenerator {
 		} catch (IOException e) {
 			throw new AdempiereException(e.getMessage());
 		}
+	}
+	
+	public void savePdfFile(File pdfFile) {
+		File printdstfile = new File(pdfFile.getParent()
+				+ "/" + FileHelper.getDefaultFileName(invoice));
+		pdfFile.renameTo(printdstfile);
+
+		if (FileHelper.isFileForAttachment()) {
+			attachFile(printdstfile);
+		} else {
+			archiveFile(printdstfile);
+		}
+	}
+	
+	private void attachFile(File file) {
+		MAttachment atmt = invoice.createAttachment();
+		atmt.addEntry(file);
+		atmt.saveEx();
+	}
+	
+	private void archiveFile(File file) {
+		PrintInfo printInfo = new PrintInfo(file.getName(), invoice.get_Table_ID(), invoice.get_ID(), invoice.getC_BPartner_ID());
+		byte[] data = FileHelper.getFileByteData(file);
+		MArchive archive = new MArchive(Env.getCtx(), printInfo, null);
+		archive.setBinaryData(data);
+		archive.save();
 	}
 	
 	public String getInvoiceProducer() {

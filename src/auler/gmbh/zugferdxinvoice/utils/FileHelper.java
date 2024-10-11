@@ -27,11 +27,14 @@ import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MArchive;
 import org.compiere.model.MAttachment;
 import org.compiere.model.MAttachmentEntry;
 import org.compiere.model.MInvoice;
+import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 
@@ -39,6 +42,7 @@ public class FileHelper {
 
 	private static CLogger log = CLogger.getCLogger(FileHelper.class);
 	private static final String FILE_SUFFIX = "pdf";
+	private static final String ZUGFERD_FILEHANDLING_SYSCONFIGNAME = "ZUGFERD_FILE_HANDLING";
 	
 	private MInvoice invoice;
 	private List<File> files = new ArrayList<File>();
@@ -119,4 +123,34 @@ public class FileHelper {
 	public void clearFiles() {
 		files.clear();
 	}
+	
+	/**
+	 * Defines if the created file should be attached or archived
+	 * @return true if the file should be attached, false if the file should be archived
+	 */
+	public static boolean isFileForAttachment() {
+		String fileHandling = MSysConfig.getValue(ZUGFERD_FILEHANDLING_SYSCONFIGNAME, "Attachment", Env.getAD_Client_ID(Env.getCtx())).toLowerCase();
+		switch(fileHandling) {
+		case "attachment":
+			return true;
+		case "archive":
+			return false;
+		default:
+			throw new AdempiereException(ZUGFERD_FILEHANDLING_SYSCONFIGNAME + " system Configurator value not supported: " + fileHandling);
+		}
+	}
+	
+	/** 
+	 * convert File data into Byte Data
+	 * @param tempFile
+	 * @return file in ByteData 
+	 */
+	public static byte[] getFileByteData(File tempFile) {
+		try {
+			return Files.readAllBytes(tempFile.toPath());
+		} catch (IOException ioe) {
+			log.log(Level.SEVERE, "Exception while reading file " + ioe);
+			return null;
+		}
+	} 
 }
