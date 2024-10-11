@@ -36,6 +36,7 @@ import org.compiere.model.MAttachmentEntry;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 
 public class FileHelper {
@@ -74,6 +75,16 @@ public class FileHelper {
 		}
 
 		return null;
+	}
+	
+	public boolean isDefaultArchiveFileCreated() {
+		String fileName = getDefaultFileName(invoice);
+		StringBuilder sqlWhere = new StringBuilder(" AND AD_Table_ID=")
+				.append(invoice.get_Table_ID())
+				.append(" AND Record_ID=").append(invoice.getC_Invoice_ID())
+				.append(" AND Name=").append(DB.TO_STRING(fileName));
+		
+		return MArchive.get(Env.getCtx(), sqlWhere.toString(), null).length > 0;
 	}
 	
 	public void addArchivedFiles() {
