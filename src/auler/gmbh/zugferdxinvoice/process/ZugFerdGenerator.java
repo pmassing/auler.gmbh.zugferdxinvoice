@@ -137,7 +137,7 @@ public class ZugFerdGenerator {
 		savePdfFile(pdfFile);
 	}
 
-	private void generateZugFerdXML(File pdfFile) {
+	public void generateZugFerdXML(File pdfFile) throws IOException {
 		ZUGFeRDExporterFromA1 ze = new ZUGFeRDExporterFromA1();
 		ze.setProducer(getInvoiceProducer());
 		ze.setCreator(invoiceAuthor);
