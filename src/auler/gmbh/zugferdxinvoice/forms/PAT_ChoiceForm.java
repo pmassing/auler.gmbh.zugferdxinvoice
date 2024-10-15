@@ -272,7 +272,10 @@ WTableModelListener, ValueChangeListener {
 
 	
 	boolean IsZUGFeRDCreated() {
-		return fileHelper.getDefaultAttachmentFile() != null;
+		if (FileHelper.isFileForAttachment())
+			return fileHelper.getDefaultAttachmentFile() != null;
+		else 
+			return fileHelper.isDefaultArchiveFileCreated();
 	}
 	
 	

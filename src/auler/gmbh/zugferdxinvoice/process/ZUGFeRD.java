@@ -34,7 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.MAttachment;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MPaymentTerm;
 import org.compiere.model.MSysConfig;
@@ -49,8 +48,6 @@ import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.mustangproject.ZUGFeRD.IZUGFeRDPaymentDiscountTerms;
 import org.mustangproject.ZUGFeRD.IZUGFeRDPaymentTerms;
-
-import auler.gmbh.zugferdxinvoice.utils.FileHelper;
 
 
 public class ZUGFeRD extends SvrProcess {
@@ -130,14 +127,6 @@ public class ZUGFeRD extends SvrProcess {
     		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Check your Bankdetails !"));
    	
     	zugFerdGenerator.generateAndEmbeddXML(printfile);
-    	
-		File printdstfile = new File(printfile.getParent()
-				+ "/" + FileHelper.getDefaultFileName(m_invoice));
-		printfile.renameTo(printdstfile);
-
-		MAttachment atmt = m_invoice.createAttachment();
-		atmt.addEntry(printdstfile);
-		atmt.saveEx();
     }
     
     
