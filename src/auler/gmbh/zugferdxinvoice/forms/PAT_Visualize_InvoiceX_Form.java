@@ -215,7 +215,7 @@ public class PAT_Visualize_InvoiceX_Form extends Window implements EventListener
 			iframe.setContent(media);
 		}
 		else {
-			Messagebox.show(Msg.translate(Env.getCtx(), "No valid ZUGFeRD-File"));
+			Messagebox.show(Msg.translate(Env.getCtx(), "PAT_InvalidFile"));
 		}
 
 	}

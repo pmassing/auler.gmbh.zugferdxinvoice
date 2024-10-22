@@ -138,16 +138,16 @@ WTableModelListener, ValueChangeListener {
 		grid.appendChild(rows);
 		Row row1 = new Row();
 		rows.appendChild(row1);
-		row1.appendChild(new Label(Msg.translate(Env.getCtx(), "Create/View")));
+		row1.appendChild(new Label(Msg.translate(Env.getCtx(), "Create") + "/" + Msg.translate(Env.getCtx(), "view")));
 		selectExportImport.setMold("select");
 		selectExportImport.getItems().clear();
 		ZKUpdateUtil.setHflex(selectExportImport, "1");
-		selectExportImport.appendItem(Msg.translate(Env.getCtx(), "Create ZUGFeRD"),0);	
-		selectExportImport.appendItem(Msg.translate(Env.getCtx(), "View ZUGFeRD"),1);	
+		selectExportImport.appendItem(Msg.translate(Env.getCtx(), "Create") + " ZUGFeRD",0);
+		selectExportImport.appendItem(Msg.translate(Env.getCtx(), "view") + " ZUGFeRD",1);	
 		row1.appendChild(selectExportImport);
 		selectExportImport.addEventListener(Events.ON_SELECT, this);
 		
-		bankSelectorRow.appendChild(new Label(Msg.translate(Env.getCtx(), "Bank")));
+		bankSelectorRow.appendChild(new Label(Msg.translate(Env.getCtx(), "C_Bank_ID")));
 		selectBankAccount.setMold("select");
 		selectBankAccount.getItems().clear();
 		ZKUpdateUtil.setHflex(selectBankAccount, "1");
@@ -233,12 +233,12 @@ WTableModelListener, ValueChangeListener {
 	void createZUGFeRD() {
 		
 		if(IsZUGFeRDCreated()) {
-			Messagebox.show("ZUGFeRD Invoice already created");
+			Messagebox.show(Msg.translate(Env.getCtx(), "PAT_ZugFerdExists"));
 			
 			return;
 		}
 		
-		ProcessInfo pi = new ProcessInfo(Msg.translate(Env.getCtx(), "Create ZUGFeRD"), MProcess.getProcess_ID(PROCESSNAME, null));
+		ProcessInfo pi = new ProcessInfo(Msg.translate(Env.getCtx(), "Create") + " ZUGFeRD", MProcess.getProcess_ID(PROCESSNAME, null));
 		pi.setRecord_UU(parentTab.getRecord_UU());
 		pi.setIsBatch(true);
 
@@ -261,7 +261,7 @@ WTableModelListener, ValueChangeListener {
 		
 		
 		if(pi.getSummary() == null)
-			Messagebox.show("ZUGFeRD Invoice created");
+			Messagebox.show(Msg.translate(Env.getCtx(), "PAT_ZugFerdCreated"));
 		else
 			Messagebox.show(pi.getSummary());
 		
@@ -285,7 +285,7 @@ WTableModelListener, ValueChangeListener {
 			new PAT_Visualize_InvoiceX_Form(panel, parentTab, fileHelper, selectFileSource.getSelectedIndex());
 			
 		} else
-			Messagebox.show("No valid ZUGFeRD Invoice found");
+			Messagebox.show(Msg.translate(Env.getCtx(), "PAT_NoFiles"));
 
 	}
 	

@@ -44,7 +44,6 @@ import org.compiere.process.SvrProcess;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
-import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.mustangproject.ZUGFeRD.IZUGFeRDPaymentDiscountTerms;
 import org.mustangproject.ZUGFeRD.IZUGFeRDPaymentTerms;
@@ -108,13 +107,13 @@ public class ZUGFeRD extends SvrProcess {
 
     	boolean errorIfNotPosted = MSysConfig.getBooleanValue("ZUGFERD_ERROR_IF_NOT_POSTED", false, m_invoice.getAD_Client_ID(), m_invoice.getAD_Org_ID());
     	if(errorIfNotPosted && !m_invoice.isPosted())
-    		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Document not posted !"));
+    		throw new AdempiereException("@PAT_DocumentNotPosted@");
     	
     	//Leitweg-ID
     	zugFerdGenerator.setReferenceNo(referenceNo);
     	boolean isReferenceMandatory = MSysConfig.getBooleanValue("ZUGFERD_MANDATORY_REFERENCENO", true, m_invoice.getAD_Client_ID(), m_invoice.getAD_Org_ID());
     	if (isReferenceMandatory && Util.isEmpty(zugFerdGenerator.getReferenceNo()))
-    		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Insert POReference !"));
+    		throw new AdempiereException("@FillMandatory@ @PAT_ReferenceNo@");
 
     	//Metadata values
     	zugFerdGenerator.setInvoiceProducer(MSystem.get(Env.getCtx()).getName());
@@ -125,7 +124,7 @@ public class ZUGFeRD extends SvrProcess {
     	zugFerdGenerator.setBank(c_Bank_ID);
     	zugFerdGenerator.setBankAccount(c_BankAccount_ID);
     	if(!zugFerdGenerator.isValidBankDetail())
-    		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Check your Bankdetails !"));
+    		throw new AdempiereException("@PAT_InvalidBank@");
    	
     	zugFerdGenerator.generateAndEmbeddXML(printfile);
     }
