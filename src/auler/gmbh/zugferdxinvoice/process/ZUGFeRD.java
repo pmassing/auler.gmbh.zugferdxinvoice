@@ -112,7 +112,8 @@ public class ZUGFeRD extends SvrProcess {
     	
     	//Leitweg-ID
     	zugFerdGenerator.setReferenceNo(referenceNo);
-    	if (Util.isEmpty(zugFerdGenerator.getReferenceNo()))
+    	boolean isReferenceMandatory = MSysConfig.getBooleanValue("ZUGFERD_MANDATORY_REFERENCENO", true, m_invoice.getAD_Client_ID(), m_invoice.getAD_Org_ID());
+    	if (isReferenceMandatory && Util.isEmpty(zugFerdGenerator.getReferenceNo()))
     		throw new AdempiereException(Msg.getMsg(Env.getLanguage(getCtx()), "Insert POReference !"));
 
     	//Metadata values
