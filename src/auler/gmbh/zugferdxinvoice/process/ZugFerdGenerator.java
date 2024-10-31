@@ -29,6 +29,7 @@ import java.sql.Timestamp;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MArchive;
 import org.compiere.model.MAttachment;
+import org.compiere.model.MAttachmentEntry;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MBPartnerLocation;
 import org.compiere.model.MBank;
@@ -57,6 +58,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.mustangproject.BankDetails;
 import org.mustangproject.Contact;
+import org.mustangproject.FileAttachment;
 import org.mustangproject.Invoice;
 import org.mustangproject.Item;
 import org.mustangproject.Product;
@@ -148,6 +150,7 @@ public class ZugFerdGenerator {
 		Invoice zugFerdInvoice = new Invoice();
 		generateHeader(ze, zugFerdInvoice);
 		generateLines(ze, zugFerdInvoice);
+		embedFiles(ze, zugFerdInvoice);
 		exportFile(ze, zugFerdInvoice, pdfFile);
 	}
 	
@@ -303,7 +306,31 @@ public class ZugFerdGenerator {
 		}
 
 	}
+	
+	
+	/**
+	 * Embed Files to factur-x.xml from attachments of doctype(target)
+	 * of the current invoice. 
+	 * Only filetype pdf is embedded
+	 * 
+	 * @param ze
+	 * @param zugFerdInvoice
+	 * 
+	 */
+	private void embedFiles(ZUGFeRDExporterFromA1 ze, Invoice zugFerdInvoice) {
+		
+		MAttachment atm = new MAttachment(Env.getCtx(), MDocType.Table_ID, invoice.getC_DocTypeTarget_ID(), invoice.getC_DocTypeTarget().getC_DocType_UU(),  null);
+		
+		for ( MAttachmentEntry entry : atm.getEntries()) {
+			if (entry.isPDF()) {
+				FileAttachment fa = new FileAttachment(entry.getName(), entry.getContentType(), "", entry.getData());
+				zugFerdInvoice.embedFileInXML(fa);
+			}
+		}
 
+	}
+
+	
 	private void exportFile(ZUGFeRDExporterFromA1 ze, Invoice zugFerdInvoice, File pdfFile) {
 		try {
 			ze.setTransaction(zugFerdInvoice);
