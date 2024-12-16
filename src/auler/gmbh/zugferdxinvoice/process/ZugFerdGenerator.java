@@ -148,9 +148,9 @@ public class ZugFerdGenerator {
 		loadFile(ze, pdfFile);
 
 		Invoice zugFerdInvoice = new Invoice();
-		generateHeader(ze, zugFerdInvoice);
-		generateLines(ze, zugFerdInvoice);
-		embedFiles(ze, zugFerdInvoice);
+		generateHeader(zugFerdInvoice);
+		generateLines(zugFerdInvoice);
+		embedFiles(zugFerdInvoice);
 		exportFile(ze, zugFerdInvoice, pdfFile);
 	}
 	
@@ -162,7 +162,7 @@ public class ZugFerdGenerator {
 		}
 	}
 
-	private void generateHeader(ZUGFeRDExporterFromA1 ze, Invoice zugFerdInvoice) {
+	private void generateHeader(Invoice zugFerdInvoice) {
 		MClient client = MClient.get(Env.getAD_Client_ID(Env.getCtx()));
 		MUser invoiceUser = MUser.get(invoice.getAD_User_ID());
 
@@ -238,7 +238,7 @@ public class ZugFerdGenerator {
 		return addressSender.toString();
 	}
 
-	private void generateLines(ZUGFeRDExporterFromA1 ze, Invoice zugFerdInvoice) {
+	private void generateLines(Invoice zugFerdInvoice) {
 		MDocType docType = MDocType.get(invoice.getC_DocType_ID());
 		boolean isARC = (docType.getDocBaseType().equals(MInvoice.DOCBASETYPE_ARCreditMemo));
 
@@ -317,7 +317,7 @@ public class ZugFerdGenerator {
 	 * @param zugFerdInvoice
 	 * 
 	 */
-	private void embedFiles(ZUGFeRDExporterFromA1 ze, Invoice zugFerdInvoice) {
+	private void embedFiles(Invoice zugFerdInvoice) {
 		
 		MAttachment atm = new MAttachment(Env.getCtx(), MDocType.Table_ID, invoice.getC_DocTypeTarget_ID(), invoice.getC_DocTypeTarget().getC_DocType_UU(),  null);
 		
