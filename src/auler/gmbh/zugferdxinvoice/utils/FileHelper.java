@@ -36,6 +36,7 @@ import org.compiere.model.MAttachmentEntry;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MSysConfig;
+import org.compiere.tools.FileUtil;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -123,14 +124,14 @@ public class FileHelper {
 	}
 	
 	private File getArchiveFile(MArchive archive) {
-		File pdfFile = null;
+		File archivedFile = null;
 		try {
-			pdfFile = new File(archive.getName());
-			Files.write(pdfFile.toPath(), archive.getBinaryData());
+			archivedFile = FileUtil.createFile(archive.getName());
+			Files.write(archivedFile.toPath(), archive.getBinaryData());
 		} catch (IOException e) {
 			log.severe(e.getMessage());
 		}
-		return pdfFile;
+		return archivedFile;
 	}
 	
 	public static boolean isPDFByExtension(String fileName) {

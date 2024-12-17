@@ -201,7 +201,7 @@ public class PAT_Visualize_InvoiceX_Form extends Window implements EventListener
 		
 		if (isXMLFile(docFile)) {
 			openFile(docFile.getName());
-		}else {
+		} else {
 			docimporter = new ZUGFeRDInvoiceImporter(docFile.getPath());
 			if (docimporter.canParse()) {
 				File xmlfile = new File(xmlFilename);
