@@ -200,7 +200,7 @@ public class PAT_Visualize_InvoiceX_Form extends Window implements EventListener
 	private void setContent(File docFile)  throws Exception {
 		
 		if (isXMLFile(docFile)) {
-			openFile(docFile.getName());
+			openFile(docFile.getPath());
 		} else {
 			docimporter = new ZUGFeRDInvoiceImporter(docFile.getPath());
 			if (docimporter.canParse()) {
