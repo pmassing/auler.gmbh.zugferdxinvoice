@@ -55,6 +55,7 @@ import org.compiere.print.MPrintFormat;
 import org.compiere.print.ReportEngine;
 import org.compiere.process.ProcessInfo;
 import org.compiere.process.ServerProcessCtl;
+import org.compiere.tools.FileUtil;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
@@ -149,7 +150,7 @@ public class ZugFerdGenerator {
 		zf2p.generateXML(zugFerdInvoice);
 		String theXML = new String(zf2p.getXML());
 		String fileName = FileHelper.getDefaultFileName(invoice, "xml");
-		File outputFile = new File(fileName);
+		File outputFile = FileUtil.createFile(fileName);
 		BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
 		try {
 			writer.write(theXML);
