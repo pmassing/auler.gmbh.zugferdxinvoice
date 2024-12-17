@@ -21,7 +21,9 @@
  *****************************************************************************/
 package auler.gmbh.zugferdxinvoice.process;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
@@ -63,6 +65,8 @@ import org.mustangproject.Invoice;
 import org.mustangproject.Item;
 import org.mustangproject.Product;
 import org.mustangproject.TradeParty;
+import org.mustangproject.ZUGFeRD.Profiles;
+import org.mustangproject.ZUGFeRD.ZUGFeRD2PullProvider;
 import org.mustangproject.ZUGFeRD.ZUGFeRDExporterFromA1;
 
 import auler.gmbh.zugferdxinvoice.process.ZUGFeRD.patpaymentterms;
@@ -133,6 +137,30 @@ public class ZugFerdGenerator {
 				bankAccount.getIBAN() != null && 
 				bank.getRoutingNo() != null && bank.getName() != null;
 	}
+	
+	public void generateXRechnungXML() throws IOException {
+		if (Util.isEmpty(getReferenceNo())) {
+			throw new AdempiereException("Leitweg-ID is mandatory for XRechnung");
+		}
+		Invoice zugFerdInvoice = generateZUGFeRDInvoice();
+
+		ZUGFeRD2PullProvider zf2p = new ZUGFeRD2PullProvider();
+		zf2p.setProfile(Profiles.getByName("XRechnung"));
+		zf2p.generateXML(zugFerdInvoice);
+		String theXML = new String(zf2p.getXML());
+		String fileName = FileHelper.getDefaultFileName(invoice, "xml");
+		File outputFile = new File(fileName);
+		BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
+		try {
+			writer.write(theXML);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			writer.close();
+		}
+		
+		saveFileInSystem(outputFile);
+	}
 
 	public void generateAndEmbeddXML(File pdfFile) throws IOException {
 		generateZugFerdXML(pdfFile);
@@ -147,11 +175,17 @@ public class ZugFerdGenerator {
 		ze.ignorePDFAErrors();
 		loadFile(ze, pdfFile);
 
+		Invoice zugFerdInvoice = generateZUGFeRDInvoice();
+		exportFile(ze, zugFerdInvoice, pdfFile);
+	}
+	
+	public Invoice generateZUGFeRDInvoice() {
 		Invoice zugFerdInvoice = new Invoice();
 		generateHeader(zugFerdInvoice);
 		generateLines(zugFerdInvoice);
 		embedFiles(zugFerdInvoice);
-		exportFile(ze, zugFerdInvoice, pdfFile);
+		
+		return zugFerdInvoice; 
 	}
 	
 	public void loadFile(ZUGFeRDExporterFromA1 ze, File pdfFile) {
@@ -222,6 +256,7 @@ public class ZugFerdGenerator {
 
 		//Leitweg-ID
 		zugFerdInvoice.setReferenceNumber(getReferenceNo());
+		zugFerdInvoice.setBuyerOrderReferencedDocumentID(invoice.getPOReference());
 	}
 	
 	private String generateAddressString(MLocation location) {
@@ -346,10 +381,14 @@ public class ZugFerdGenerator {
 				+ "/" + FileHelper.getDefaultFileName(invoice));
 		pdfFile.renameTo(printdstfile);
 
+		saveFileInSystem(printdstfile);
+	}
+	
+	private void saveFileInSystem(File file) {
 		if (FileHelper.isFileForAttachment()) {
-			attachFile(printdstfile);
+			attachFile(file);
 		} else {
-			archiveFile(printdstfile);
+			archiveFile(file);
 		}
 	}
 	

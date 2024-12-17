@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MBPartner;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MPaymentTerm;
 import org.compiere.model.MSysConfig;
@@ -60,6 +61,7 @@ public class ZUGFeRD extends SvrProcess {
 	String referenceNo = null;
 
 	MInvoice m_invoice = null;
+	boolean isXRechnung = false;
     CLogger log = CLogger.getCLogger(ZUGFeRD.class);
     
 	List<ProcessInfoParameter>  paraInvoiceX = new ArrayList<ProcessInfoParameter>();;
@@ -88,13 +90,20 @@ public class ZUGFeRD extends SvrProcess {
 	protected String doIt() throws Exception {
 		m_invoice = MInvoice.get(getRecord_ID());
 		zugFerdGenerator = new ZugFerdGenerator(m_invoice);
-		prepInvoice();
 		
+		setIsXRechnungBasedOnBusinessPartner();
+		if (!isXRechnung)
+			prepInvoice();
+
 		createInvoice();
 		
 		return null;
 	}
 	
+	private void setIsXRechnungBasedOnBusinessPartner() {
+		MBPartner businessPartner = MBPartner.get(getCtx(), m_invoice.getC_BPartner_ID());
+		isXRechnung = businessPartner.get_ValueAsBoolean("BXS_IsXRechnung");
+	}
 	
 	// #2 Run printprocess
 	private void prepInvoice() throws Exception {
@@ -126,7 +135,10 @@ public class ZUGFeRD extends SvrProcess {
     	if(!zugFerdGenerator.isValidBankDetail())
     		throw new AdempiereException("@PAT_InvalidBank@");
    	
-    	zugFerdGenerator.generateAndEmbeddXML(printfile);
+    	if (!isXRechnung)
+    		zugFerdGenerator.generateAndEmbeddXML(printfile);
+    	else
+    		zugFerdGenerator.generateXRechnungXML();
     }
     
     
