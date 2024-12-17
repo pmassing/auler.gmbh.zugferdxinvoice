@@ -138,7 +138,7 @@ public class ZUGFeRD extends SvrProcess {
     	if (!isXRechnung)
     		zugFerdGenerator.generateAndEmbeddXML(printfile);
     	else
-    		zugFerdGenerator.generateXRechnungXML();
+    		zugFerdGenerator.generateAndSaveXRechnungXML();
     }
     
     

@@ -139,7 +139,12 @@ public class ZugFerdGenerator {
 				bank.getRoutingNo() != null && bank.getName() != null;
 	}
 	
-	public void generateXRechnungXML() throws IOException {
+	public void generateAndSaveXRechnungXML() throws IOException {
+		File file = generateXRechnungXML();
+		saveFileInSystem(file);
+	}
+	
+	public File generateXRechnungXML() throws IOException {
 		if (Util.isEmpty(getReferenceNo())) {
 			throw new AdempiereException("Leitweg-ID is mandatory for XRechnung");
 		}
@@ -160,7 +165,7 @@ public class ZugFerdGenerator {
 			writer.close();
 		}
 		
-		saveFileInSystem(outputFile);
+		return outputFile;
 	}
 
 	public void generateAndEmbeddXML(File pdfFile) throws IOException {
