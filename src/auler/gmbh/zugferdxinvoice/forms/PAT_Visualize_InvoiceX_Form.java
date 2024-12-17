@@ -26,12 +26,8 @@ package auler.gmbh.zugferdxinvoice.forms;
 
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
-
-import javax.xml.transform.TransformerException;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.AdempiereWebUI;
@@ -234,7 +230,7 @@ public class PAT_Visualize_InvoiceX_Form extends Window implements EventListener
 			htmlhc.setContent(xml);
 			AMedia media = new AMedia(null, null, null, xml.getBytes());
 			iframe.setContent(media);
-		} catch (FileNotFoundException | UnsupportedEncodingException | TransformerException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			throw new AdempiereException("Cannot open the xml file: " + xmlFileName);
 		}
