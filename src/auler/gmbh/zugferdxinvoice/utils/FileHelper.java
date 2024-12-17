@@ -58,7 +58,7 @@ public class FileHelper {
 		MAttachment m_attachment = MAttachment.get(Env.getCtx(), MInvoice.Table_ID, invoice.getC_Invoice_ID(), invoice.getC_Invoice_UU(), null);
 		if (m_attachment != null) {
 			for (MAttachmentEntry entry : m_attachment.getEntries()) {
-				if (isPDFByExtension(entry.getName())) {
+				if (isValidFileExtension(entry.getName())) {
 					files.add(entry.getFile());
 				}
 			}
