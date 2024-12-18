@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.logging.Level;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.AdempiereWebUI;
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
@@ -193,33 +194,47 @@ public class PAT_Visualize_InvoiceX_Form extends Window implements EventListener
 	} // populateFiles
 
 	private void setContent(File docFile)  throws Exception {
-		docimporter = new ZUGFeRDInvoiceImporter(docFile.getPath());
-		if(docimporter.canParse()) {
+		
+		if (isXMLFile(docFile)) {
+			openFile(docFile.getPath());
+		} else {
+			docimporter = new ZUGFeRDInvoiceImporter(docFile.getPath());
+			if (docimporter.canParse()) {
+				File xmlfile = new File(xmlFilename);
+				FileOutputStream out = new FileOutputStream(xmlfile);
+				out.write(docimporter.getRawXML());
+				out.close();
+				openFile(xmlFilename);
+			}
+			else {
+				Messagebox.show(Msg.translate(Env.getCtx(), "PAT_InvalidFile"));
+			}
+		}
+	}
+	
+	private boolean isXMLFile(File file) {
+		return FileHelper.isXMLByExtension(file.getName());
+	}
+	
+	private void openFile(String xmlFileName) {
+		zvi = new ZUGFeRDVisualizer();
+		
+		Language langCode = ZUGFeRDVisualizer.Language.EN;
+		if(Env.getLocaleLanguage(Env.getCtx()).getLanguageCode().equals("de"))
+			langCode = ZUGFeRDVisualizer.Language.DE;
+		else if(Env.getLocaleLanguage(Env.getCtx()).getLanguageCode().equals("fr"))
+			langCode = ZUGFeRDVisualizer.Language.FR;
 
-			zvi = new ZUGFeRDVisualizer();
-
-			File xmlfile = new File(xmlFilename);
-			FileOutputStream out = new FileOutputStream(xmlfile);
-			out.write(docimporter.getRawXML());
-			out.close();
-			Language langCode = ZUGFeRDVisualizer.Language.EN;
-			if(Env.getLocaleLanguage(Env.getCtx()).getLanguageCode().equals("de"))
-				langCode = ZUGFeRDVisualizer.Language.DE;
-			else if(Env.getLocaleLanguage(Env.getCtx()).getLanguageCode().equals("fr"))
-				langCode = ZUGFeRDVisualizer.Language.FR;
-
-			String xml = zvi.visualize(xmlFilename, langCode);
-
+		try {
+			String xml = zvi.visualize(xmlFileName, langCode);
 			htmlhc.setContent(xml);
 			AMedia media = new AMedia(null, null, null, xml.getBytes());
 			iframe.setContent(media);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new AdempiereException("Cannot open the xml file: " + xmlFileName);
 		}
-		else {
-			Messagebox.show(Msg.translate(Env.getCtx(), "PAT_InvalidFile"));
-		}
-
 	}
-	
 	
 	StringBuilder cleanString(String str) {
 		

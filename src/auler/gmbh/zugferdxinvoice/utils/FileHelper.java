@@ -33,11 +33,14 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MArchive;
 import org.compiere.model.MAttachment;
 import org.compiere.model.MAttachmentEntry;
+import org.compiere.model.MBPartner;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MSysConfig;
+import org.compiere.tools.FileUtil;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 
 public class FileHelper {
 
@@ -56,7 +59,7 @@ public class FileHelper {
 		MAttachment m_attachment = MAttachment.get(Env.getCtx(), MInvoice.Table_ID, invoice.getC_Invoice_ID(), invoice.getC_Invoice_UU(), null);
 		if (m_attachment != null) {
 			for (MAttachmentEntry entry : m_attachment.getEntries()) {
-				if (isPDFByExtension(entry.getName())) {
+				if (isValidFileExtension(entry.getName())) {
 					files.add(entry.getFile());
 				}
 			}
@@ -64,11 +67,12 @@ public class FileHelper {
 	}
 	
 	public File getDefaultAttachmentFile() {
-		String filename = getDefaultFileName(invoice);
+		String fileName = getDefaultFileName();
+
 		MAttachment m_attachment = MAttachment.get(Env.getCtx(), MInvoice.Table_ID, invoice.getC_Invoice_ID(), invoice.getC_Invoice_UU(), null);
 		if (m_attachment != null) {
 			for (MAttachmentEntry entry : m_attachment.getEntries()) {
-				if (entry.getName().equals(filename)) {
+				if (entry.getName().equals(fileName)) {
 					return entry.getFile();
 				}
 			}
@@ -77,8 +81,17 @@ public class FileHelper {
 		return null;
 	}
 	
+	private String getDefaultFileName() {
+		MBPartner bPartner = MBPartner.get(Env.getCtx(), invoice.getC_BPartner_ID());
+		String suffix = null;
+		if (bPartner.get_ValueAsBoolean("BXS_IsXRechnung")) //If isXRechnung
+			suffix = "xml";
+
+		return getDefaultFileName(invoice, suffix);
+	}
+	
 	public boolean isDefaultArchiveFileCreated() {
-		String fileName = getDefaultFileName(invoice);
+		String fileName = getDefaultFileName();
 		StringBuilder sqlWhere = new StringBuilder(" AND AD_Table_ID=")
 				.append(invoice.get_Table_ID())
 				.append(" AND Record_ID=").append(invoice.getC_Invoice_ID())
@@ -92,7 +105,7 @@ public class FileHelper {
 		
 		if (archives != null && archives.length > 0) {
 			for (MArchive archive : archives) {
-				if (isPDFByExtension(archive.getName()))
+				if (isValidFileExtension(archive.getName()))
 					files.add(getArchiveFile(archive));
 			}
 		}
@@ -106,15 +119,19 @@ public class FileHelper {
 		return MArchive.get(Env.getCtx(), sqlWhere.toString(), null);
 	}
 	
+	private boolean isValidFileExtension(String fileName) {
+		return isPDFByExtension(fileName) || isXMLByExtension(fileName);
+	}
+	
 	private File getArchiveFile(MArchive archive) {
-		File pdfFile = null;
+		File archivedFile = null;
 		try {
-			pdfFile = new File(archive.getName());
-			Files.write(pdfFile.toPath(), archive.getBinaryData());
+			archivedFile = FileUtil.createFile(archive.getName());
+			Files.write(archivedFile.toPath(), archive.getBinaryData());
 		} catch (IOException e) {
 			log.severe(e.getMessage());
 		}
-		return pdfFile;
+		return archivedFile;
 	}
 	
 	public static boolean isPDFByExtension(String fileName) {
@@ -122,9 +139,21 @@ public class FileHelper {
 	    return fileName.endsWith("." + FILE_SUFFIX);
 	}
 	
+	public static boolean isXMLByExtension(String fileName) {
+	    fileName = fileName.toLowerCase();
+	    return fileName.endsWith(".xml");
+	}
+	
+	
 	public static String getDefaultFileName(MInvoice invoice) {
+		return getDefaultFileName(invoice, null);
+	}
+
+	public static String getDefaultFileName(MInvoice invoice, String suffix) {
+		if (Util.isEmpty(suffix)) 
+			suffix = FILE_SUFFIX;
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-		return invoice.getDocumentNo() + "-" + sdf.format(invoice.getDateInvoiced()) + "." + FILE_SUFFIX;
+		return invoice.getDocumentNo() + "-" + sdf.format(invoice.getDateInvoiced()) + "." + suffix;
 	}
 
 	public List<File> getFiles() {
