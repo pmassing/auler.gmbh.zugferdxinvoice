@@ -44,6 +44,7 @@ import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MLocation;
 import org.compiere.model.MOrg;
+import org.compiere.model.MOrgInfo;
 import org.compiere.model.MPaymentTerm;
 import org.compiere.model.MProduct;
 import org.compiere.model.MSysConfig;
@@ -219,7 +220,8 @@ public class ZugFerdGenerator {
 		zugFerdInvoice.setNumber(invoice.getDocumentNo());
 
 		MOrg org = new MOrg(Env.getCtx(), invoice.getAD_Org_ID(), null);
-		MLocation orgLocation = MLocation.get(org.getInfo().getC_Location_ID());
+		MOrgInfo orgInfo = MOrgInfo.get(org.getAD_Org_ID());
+		MLocation orgLocation = MLocation.get(orgInfo.getC_Location_ID());
 		String addressSender = generateAddressString(orgLocation);
 
 		MCountry orgCountry = MCountry.get(orgLocation.getC_Country_ID());
@@ -230,6 +232,11 @@ public class ZugFerdGenerator {
 				orgCountry.getCountryCode());
 
 		tradePartySender.addVATID(org.getInfo().getTaxID());
+
+		Contact sellerContact = new Contact(org.getName(), 
+				(orgInfo.getPhone()==null) ? "" : orgInfo.getPhone(),
+						(orgInfo.getEMail()==null) ? "" : orgInfo.getEMail());
+		tradePartySender.setContact(sellerContact);
 
 		BankDetails bankd = new BankDetails(bankAccount.getIBAN(), bank.getRoutingNo());
 		bankd.setAccountName(bank.getName());
