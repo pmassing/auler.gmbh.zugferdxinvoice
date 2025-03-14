@@ -25,7 +25,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.math.RoundingMode;
 import java.sql.Timestamp;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -323,13 +322,13 @@ public class ZugFerdGenerator {
 
 				item.setProduct(product);
 				if (isARC)
-					item.setQuantity(invoiceLine.getQtyInvoiced().negate().setScale(2, RoundingMode.HALF_UP));
+					item.setQuantity(invoiceLine.getQtyInvoiced().negate());
 				else
-					item.setQuantity(invoiceLine.getQtyInvoiced().setScale(2, RoundingMode.HALF_UP));
+					item.setQuantity(invoiceLine.getQtyInvoiced());
 
-				item.setPrice(invoiceLine.getPriceActual().setScale(2, RoundingMode.HALF_UP));
-				item.setTax(invoiceLine.getTaxAmt().setScale(2, RoundingMode.HALF_UP));
-				item.setLineTotalAmount(invoiceLine.getLineTotalAmt().setScale(2, RoundingMode.HALF_UP));
+				item.setPrice(invoiceLine.getPriceActual());
+				item.setTax(invoiceLine.getTaxAmt());
+				item.setLineTotalAmount(invoiceLine.getLineTotalAmt());
 				zugFerdInvoice.addItem(item);
 			} else if (invoiceLine.getC_Charge_ID() > 0) {
 
@@ -343,12 +342,12 @@ public class ZugFerdGenerator {
 
 				item.setProduct(product);
 				if (isARC)
-					item.setQuantity(invoiceLine.getQtyInvoiced().negate().setScale(2, RoundingMode.HALF_UP));
+					item.setQuantity(invoiceLine.getQtyInvoiced().negate());
 				else
-					item.setQuantity(invoiceLine.getQtyInvoiced().setScale(2, RoundingMode.HALF_UP));
-				item.setPrice(invoiceLine.getPriceActual().setScale(2, RoundingMode.HALF_UP));
-				item.setTax(invoiceLine.getTaxAmt().setScale(2, RoundingMode.HALF_UP));
-				item.setLineTotalAmount(invoiceLine.getLineTotalAmt().setScale(2, RoundingMode.HALF_UP));
+					item.setQuantity(invoiceLine.getQtyInvoiced());
+				item.setPrice(invoiceLine.getPriceActual());
+				item.setTax(invoiceLine.getTaxAmt());
+				item.setLineTotalAmount(invoiceLine.getLineTotalAmt());
 				zugFerdInvoice.addItem(item);
 			}
 		}

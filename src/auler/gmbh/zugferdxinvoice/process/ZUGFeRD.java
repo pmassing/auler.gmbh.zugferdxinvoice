@@ -175,7 +175,7 @@ public class ZUGFeRD extends SvrProcess {
 //			return "#SKONTO#TAGE=" + days + "#PROZENT=" + dpercent + "#BASISBETRAG=" + dbaseamt + "#";
 			
 	    	MPaymentTerm paymentTerm = new MPaymentTerm(inv.getCtx(), inv.getC_PaymentTerm_ID(), inv.get_TrxName());
-			return paymentTerm.getDescription();
+			return paymentTerm.getDescription() == null ? "" : paymentTerm.getDescription();
 			
 		}
 		
