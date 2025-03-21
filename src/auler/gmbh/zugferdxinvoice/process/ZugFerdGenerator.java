@@ -136,7 +136,7 @@ public class ZugFerdGenerator {
 	public boolean isValidBankDetail() {
 		return bank != null && bankAccount != null && 
 				bankAccount.getIBAN() != null && 
-				bank.getRoutingNo() != null && bank.getName() != null;
+				bank.getSwiftCode() != null && bank.getName() != null;
 	}
 	
 	public void generateAndSaveXRechnungXML() throws IOException {
@@ -237,7 +237,7 @@ public class ZugFerdGenerator {
 						(orgInfo.getEMail()==null) ? "" : orgInfo.getEMail());
 		tradePartySender.setContact(sellerContact);
 
-		BankDetails bankd = new BankDetails(bankAccount.getIBAN(), bank.getRoutingNo());
+		BankDetails bankd = new BankDetails(bankAccount.getIBAN(), bank.getSwiftCode());
 		bankd.setAccountName(bank.getName());
 
 		tradePartySender.addBankDetails(bankd);
