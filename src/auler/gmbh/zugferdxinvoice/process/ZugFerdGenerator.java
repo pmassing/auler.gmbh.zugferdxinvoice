@@ -313,7 +313,7 @@ public class ZugFerdGenerator {
 
 				Product product = new Product();
 				MProduct productLine = MProduct.get(invoiceLine.getM_Product_ID());
-				product.setName(productLine.getValue());
+				product.setName(productLine.getName());
 				product.setDescription((invoiceLine.getDescription() == null ? "" : invoiceLine.getDescription()));
 				MTax tax = MTax.get(invoiceLine.getC_Tax_ID());
 				product.setVATPercent(tax.getRate());
