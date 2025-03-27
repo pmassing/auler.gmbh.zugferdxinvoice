@@ -279,16 +279,23 @@ public class ZugFerdGenerator {
 	
 	private String generateAddressString(MLocation location) {
 		StringBuilder addressSender = new StringBuilder();
-		if (location.getAddress1() != null)
+		if (Util.isEmpty(location.getAddress1()))
 			addressSender.append(location.getAddress1());
-		if (location.getAddress2() != null)
-			addressSender.append(location.getAddress2());
-		if (location.getAddress3() != null)
-			addressSender.append(location.getAddress3());
-		if (location.getAddress4() != null)
-			addressSender.append(location.getAddress4());
+		if (Util.isEmpty(location.getAddress2()))
+			appendWithSpace(addressSender, location.getAddress2());
+		if (Util.isEmpty(location.getAddress3()))
+			appendWithSpace(addressSender, location.getAddress3());
+		if (Util.isEmpty(location.getAddress4()))
+			appendWithSpace(addressSender, location.getAddress4());
 		
 		return addressSender.toString();
+	}
+	
+	private void appendWithSpace(StringBuilder sb, String value) {
+	    if (sb.length() > 0) {  // Add a space ONLY if there's already content
+	        sb.append(" ");
+	    }
+	    sb.append(value);
 	}
 
 	private void generateLines(Invoice zugFerdInvoice) {
