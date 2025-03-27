@@ -58,6 +58,7 @@ import org.compiere.process.ServerProcessCtl;
 import org.compiere.tools.FileUtil;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
+import org.compiere.util.Language;
 import org.compiere.util.Util;
 import org.mustangproject.BankDetails;
 import org.mustangproject.Contact;
@@ -86,6 +87,7 @@ public class ZugFerdGenerator {
 	
 	private String invoiceProducer;
 	private String invoiceAuthor;
+	private String language = Language.getBaseAD_Language();
 
 	public ZugFerdGenerator(MInvoice invoice) {
 		this.invoice = invoice;
@@ -125,6 +127,10 @@ public class ZugFerdGenerator {
 		this.referenceNo = referenceNo;
 	}
 	
+	public void setLanguage(String language) {
+		this.language = language;
+	}
+
 	public String getReferenceNo() {
 		if (Util.isEmpty(referenceNo)) {
 			MBPartner bp = MBPartner.get(Env.getCtx(), invoice.getC_BPartner_ID());
@@ -213,7 +219,7 @@ public class ZugFerdGenerator {
 		zugFerdInvoice.setDueDate(duedate);
 
 		MPaymentTerm paymentTerm = new MPaymentTerm(Env.getCtx(), invoice.getC_PaymentTerm_ID(), invoice.get_TrxName());
-		zugFerdInvoice.setPaymentTermDescription(paymentTerm.getName());
+		zugFerdInvoice.setPaymentTermDescription(paymentTerm.get_Translation("Name", language, false, true));
 		zugFerdInvoice.setIssueDate(invoice.getDateInvoiced());
 		zugFerdInvoice.setDeliveryDate(invoice.getDateInvoiced());
 		zugFerdInvoice.setNumber(invoice.getDocumentNo());
@@ -313,7 +319,7 @@ public class ZugFerdGenerator {
 
 				Product product = new Product();
 				MProduct productLine = MProduct.get(invoiceLine.getM_Product_ID());
-				product.setName(productLine.getName());
+				product.setName(productLine.get_Translation("Name", language, false, true));
 				product.setDescription((invoiceLine.getDescription() == null ? "" : invoiceLine.getDescription()));
 				MTax tax = MTax.get(invoiceLine.getC_Tax_ID());
 				product.setVATPercent(tax.getRate());
@@ -334,7 +340,7 @@ public class ZugFerdGenerator {
 
 				Product product = new Product();
 				MCharge charge = MCharge.get(invoiceLine.getC_Charge_ID());
-				product.setName(charge.getName());
+				product.setName(charge.get_Translation("Name", language, false, true));
 				product.setDescription((invoiceLine.getDescription() == null ? "" : invoiceLine.getDescription()));
 				MTax tax = MTax.get(invoiceLine.getC_Tax_ID());
 				product.setVATPercent(tax.getRate());
