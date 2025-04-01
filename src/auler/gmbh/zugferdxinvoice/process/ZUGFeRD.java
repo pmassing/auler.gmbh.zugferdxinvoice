@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPartner;
@@ -147,10 +148,12 @@ public class ZUGFeRD extends SvrProcess {
     	MInvoice inv = null;
      	Timestamp duedate = null;
      	patdiscountterms pt = null;
+     	String language;
      	
-    	patpaymentterms(MInvoice minv) {
+    	patpaymentterms(MInvoice minv, String language) {
     		
     		inv=minv;
+    		this.language = language;
     		
     		if(inv != null) {
     	    	MPaymentTerm paymentTerm = new MPaymentTerm(inv.getCtx(), inv.getC_PaymentTerm_ID(), inv.get_TrxName());
@@ -175,8 +178,12 @@ public class ZUGFeRD extends SvrProcess {
 //			return "#SKONTO#TAGE=" + days + "#PROZENT=" + dpercent + "#BASISBETRAG=" + dbaseamt + "#";
 			
 	    	MPaymentTerm paymentTerm = new MPaymentTerm(inv.getCtx(), inv.getC_PaymentTerm_ID(), inv.get_TrxName());
-			return paymentTerm.getDescription() == null ? "" : paymentTerm.getDescription();
-			
+	    	boolean usePaymentTermName = MSysConfig.getBooleanValue("ZUGFERD_USE_PAYMENT_TERM_NAME", false, Env.getAD_Client_ID(Env.getCtx()));
+	    	
+	    	String field = usePaymentTermName ? "Name" : "Description";
+	    	String description = paymentTerm.get_Translation(field, language, false, true);
+	    	
+	    	return Optional.ofNullable(description).orElse("");
 		}
 		
 		@Override

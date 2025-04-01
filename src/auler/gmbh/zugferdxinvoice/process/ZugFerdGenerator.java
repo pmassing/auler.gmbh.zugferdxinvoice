@@ -212,7 +212,7 @@ public class ZugFerdGenerator {
 		MClient client = MClient.get(Env.getAD_Client_ID(Env.getCtx()));
 		MUser invoiceUser = MUser.get(invoice.getAD_User_ID());
 
-		patpaymentterms pt = new patpaymentterms(invoice);
+		patpaymentterms pt = new patpaymentterms(invoice, language);
 		zugFerdInvoice.setPaymentTerms(pt);
 
 		Timestamp duedate = (Timestamp) pt.getDueDate();
@@ -279,13 +279,13 @@ public class ZugFerdGenerator {
 	
 	private String generateAddressString(MLocation location) {
 		StringBuilder addressSender = new StringBuilder();
-		if (Util.isEmpty(location.getAddress1()))
+		if (!Util.isEmpty(location.getAddress1()))
 			addressSender.append(location.getAddress1());
-		if (Util.isEmpty(location.getAddress2()))
+		if (!Util.isEmpty(location.getAddress2()))
 			appendWithSpace(addressSender, location.getAddress2());
-		if (Util.isEmpty(location.getAddress3()))
+		if (!Util.isEmpty(location.getAddress3()))
 			appendWithSpace(addressSender, location.getAddress3());
-		if (Util.isEmpty(location.getAddress4()))
+		if (!Util.isEmpty(location.getAddress4()))
 			appendWithSpace(addressSender, location.getAddress4());
 		
 		return addressSender.toString();
