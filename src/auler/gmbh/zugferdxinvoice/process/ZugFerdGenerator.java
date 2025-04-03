@@ -58,6 +58,7 @@ import org.compiere.process.ServerProcessCtl;
 import org.compiere.tools.FileUtil;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
+import org.compiere.util.Language;
 import org.compiere.util.Util;
 import org.mustangproject.BankDetails;
 import org.mustangproject.Contact;
@@ -86,6 +87,7 @@ public class ZugFerdGenerator {
 	
 	private String invoiceProducer;
 	private String invoiceAuthor;
+	private String language = Language.getBaseAD_Language();
 
 	public ZugFerdGenerator(MInvoice invoice) {
 		this.invoice = invoice;
@@ -125,6 +127,10 @@ public class ZugFerdGenerator {
 		this.referenceNo = referenceNo;
 	}
 	
+	public void setLanguage(String language) {
+		this.language = language;
+	}
+
 	public String getReferenceNo() {
 		if (Util.isEmpty(referenceNo)) {
 			MBPartner bp = MBPartner.get(Env.getCtx(), invoice.getC_BPartner_ID());
@@ -206,14 +212,14 @@ public class ZugFerdGenerator {
 		MClient client = MClient.get(Env.getAD_Client_ID(Env.getCtx()));
 		MUser invoiceUser = MUser.get(invoice.getAD_User_ID());
 
-		patpaymentterms pt = new patpaymentterms(invoice);
+		patpaymentterms pt = new patpaymentterms(invoice, language);
 		zugFerdInvoice.setPaymentTerms(pt);
 
 		Timestamp duedate = (Timestamp) pt.getDueDate();
 		zugFerdInvoice.setDueDate(duedate);
 
 		MPaymentTerm paymentTerm = new MPaymentTerm(Env.getCtx(), invoice.getC_PaymentTerm_ID(), invoice.get_TrxName());
-		zugFerdInvoice.setPaymentTermDescription(paymentTerm.getName());
+		zugFerdInvoice.setPaymentTermDescription(paymentTerm.get_Translation("Name", language, false, true));
 		zugFerdInvoice.setIssueDate(invoice.getDateInvoiced());
 		zugFerdInvoice.setDeliveryDate(invoice.getDateInvoiced());
 		zugFerdInvoice.setNumber(invoice.getDocumentNo());
@@ -273,16 +279,23 @@ public class ZugFerdGenerator {
 	
 	private String generateAddressString(MLocation location) {
 		StringBuilder addressSender = new StringBuilder();
-		if (location.getAddress1() != null)
+		if (!Util.isEmpty(location.getAddress1()))
 			addressSender.append(location.getAddress1());
-		if (location.getAddress2() != null)
-			addressSender.append(location.getAddress2());
-		if (location.getAddress3() != null)
-			addressSender.append(location.getAddress3());
-		if (location.getAddress4() != null)
-			addressSender.append(location.getAddress4());
+		if (!Util.isEmpty(location.getAddress2()))
+			appendWithSpace(addressSender, location.getAddress2());
+		if (!Util.isEmpty(location.getAddress3()))
+			appendWithSpace(addressSender, location.getAddress3());
+		if (!Util.isEmpty(location.getAddress4()))
+			appendWithSpace(addressSender, location.getAddress4());
 		
 		return addressSender.toString();
+	}
+	
+	private void appendWithSpace(StringBuilder sb, String value) {
+	    if (sb.length() > 0) {  // Add a space ONLY if there's already content
+	        sb.append(" ");
+	    }
+	    sb.append(value);
 	}
 
 	private void generateLines(Invoice zugFerdInvoice) {
@@ -313,7 +326,7 @@ public class ZugFerdGenerator {
 
 				Product product = new Product();
 				MProduct productLine = MProduct.get(invoiceLine.getM_Product_ID());
-				product.setName(productLine.getName());
+				product.setName(productLine.get_Translation("Name", language, false, true));
 				product.setDescription((invoiceLine.getDescription() == null ? "" : invoiceLine.getDescription()));
 				MTax tax = MTax.get(invoiceLine.getC_Tax_ID());
 				product.setVATPercent(tax.getRate());
@@ -334,7 +347,7 @@ public class ZugFerdGenerator {
 
 				Product product = new Product();
 				MCharge charge = MCharge.get(invoiceLine.getC_Charge_ID());
-				product.setName(charge.getName());
+				product.setName(charge.get_Translation("Name", language, false, true));
 				product.setDescription((invoiceLine.getDescription() == null ? "" : invoiceLine.getDescription()));
 				MTax tax = MTax.get(invoiceLine.getC_Tax_ID());
 				product.setVATPercent(tax.getRate());
