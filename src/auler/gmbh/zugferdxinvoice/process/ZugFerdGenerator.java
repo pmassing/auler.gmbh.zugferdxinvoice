@@ -242,6 +242,7 @@ public class ZugFerdGenerator {
 				(orgInfo.getPhone()==null) ? "" : orgInfo.getPhone(),
 						(orgInfo.getEMail()==null) ? "" : orgInfo.getEMail());
 		tradePartySender.setContact(sellerContact);
+		tradePartySender.setEmail(orgInfo.getEMail() == null ? "" : orgInfo.getEMail());
 
 		BankDetails bankd = new BankDetails(bankAccount.getIBAN(), bank.getSwiftCode());
 		bankd.setAccountName(bank.getName());
@@ -268,6 +269,7 @@ public class ZugFerdGenerator {
 				(invoiceUser.getPhone()==null)?"":invoiceUser.getPhone(),
 						(invoiceUser.getEMail()==null)?"":invoiceUser.getEMail());
 		tradePartyRecipient.setContact(contact);
+		tradePartyRecipient.setEmail(invoiceUser.getEMail() == null ? "" : invoiceUser.getEMail());
 
 		zugFerdInvoice.setSender(tradePartySender);
 		zugFerdInvoice.setRecipient(tradePartyRecipient);
