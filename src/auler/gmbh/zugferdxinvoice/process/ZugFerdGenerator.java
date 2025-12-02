@@ -239,10 +239,10 @@ public class ZugFerdGenerator {
 		tradePartySender.addVATID(org.getInfo().getTaxID());
 
 		Contact sellerContact = new Contact(org.getName(), 
-				(orgInfo.getPhone()==null) ? "" : orgInfo.getPhone(),
-						(orgInfo.getEMail()==null) ? "" : orgInfo.getEMail());
+				safeString(orgInfo.getPhone()),
+				safeString(orgInfo.getEMail()));
 		tradePartySender.setContact(sellerContact);
-		tradePartySender.setEmail(orgInfo.getEMail() == null ? "" : orgInfo.getEMail());
+		tradePartySender.setEmail(safeString(orgInfo.getEMail()));
 
 		BankDetails bankd = new BankDetails(bankAccount.getIBAN(), bank.getSwiftCode());
 		bankd.setAccountName(bank.getName());
@@ -257,19 +257,18 @@ public class ZugFerdGenerator {
 		MCountry bpCountry = MCountry.get(location.getC_Country_ID());
 		TradeParty tradePartyRecipient = new TradeParty(
 				bp.getName()
-				+ ((bp.getName2() == null) ? "" : ", "+ bp.getName2()), 
+				+ safeString(bp.getName2()),
 				addressRecipient,
-				(location.getPostal() == null) ? "" : location.getPostal(),
-						(location.getCity() == null) ? "" : location.getCity(),
-								(bpCountry.getCountryCode() == null) ? "" : bpCountry.getCountryCode()
-				);
+				safeString(location.getPostal()),
+				safeString(location.getCity()),
+				safeString(bpCountry.getCountryCode()));
 		tradePartyRecipient.addVATID(bp.getTaxID());
 
-		Contact contact = new Contact((invoiceUser.getName()==null)?"":invoiceUser.getName(), 
-				(invoiceUser.getPhone()==null)?"":invoiceUser.getPhone(),
-						(invoiceUser.getEMail()==null)?"":invoiceUser.getEMail());
+		Contact contact = new Contact(safeString(invoiceUser.getName()), 
+				safeString(invoiceUser.getPhone()),
+				safeString(invoiceUser.getEMail()));
 		tradePartyRecipient.setContact(contact);
-		tradePartyRecipient.setEmail(invoiceUser.getEMail() == null ? "" : invoiceUser.getEMail());
+		tradePartyRecipient.setEmail(safeString(invoiceUser.getEMail()));
 
 		zugFerdInvoice.setSender(tradePartySender);
 		zugFerdInvoice.setRecipient(tradePartyRecipient);
@@ -313,7 +312,7 @@ public class ZugFerdGenerator {
 			if (invoiceLine.isDescription() || (invoiceLine.getM_Product_ID() == 0 && invoiceLine.getC_Charge_ID() == 0)) {
 				Product product = new Product();
 				product.setName("Descriptionline");
-				product.setDescription((invoiceLine.getDescription() == null ? "" : invoiceLine.getDescription()));
+				product.setDescription(safeString(invoiceLine.getDescription()));
 				product.setVATPercent(Env.ZERO);
 				product.setUnit(CD_UOM);
 
@@ -329,7 +328,7 @@ public class ZugFerdGenerator {
 				Product product = new Product();
 				MProduct productLine = MProduct.get(invoiceLine.getM_Product_ID());
 				product.setName(productLine.get_Translation("Name", language, false, true));
-				product.setDescription((invoiceLine.getDescription() == null ? "" : invoiceLine.getDescription()));
+				product.setDescription(safeString(invoiceLine.getDescription()));
 				MTax tax = MTax.get(invoiceLine.getC_Tax_ID());
 				product.setVATPercent(tax.getRate());
 				product.setUnit(uom);
@@ -350,7 +349,7 @@ public class ZugFerdGenerator {
 				Product product = new Product();
 				MCharge charge = MCharge.get(invoiceLine.getC_Charge_ID());
 				product.setName(charge.get_Translation("Name", language, false, true));
-				product.setDescription((invoiceLine.getDescription() == null ? "" : invoiceLine.getDescription()));
+				product.setDescription(safeString(invoiceLine.getDescription()));
 				MTax tax = MTax.get(invoiceLine.getC_Tax_ID());
 				product.setVATPercent(tax.getRate());
 				product.setUnit(CD_UOM);
@@ -446,6 +445,15 @@ public class ZugFerdGenerator {
 
 	public void setInvoiceAuthor(String invoiceAuthor) {
 		this.invoiceAuthor = invoiceAuthor;
+	}
+	
+	/**
+	 * Returns the string value of the input or empty string if null
+	 * @param value the value to convert
+	 * @return the string value or empty string if null
+	 */
+	private String safeString(String value) {
+	    return Util.isEmpty(value, true) ? "" : value;
 	}
 
 }
