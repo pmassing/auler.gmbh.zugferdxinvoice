@@ -57,6 +57,7 @@ import org.compiere.process.ProcessInfo;
 import org.compiere.process.ServerProcessCtl;
 import org.compiere.tools.FileUtil;
 import org.compiere.util.CLogger;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
@@ -221,7 +222,13 @@ public class ZugFerdGenerator {
 		MPaymentTerm paymentTerm = new MPaymentTerm(Env.getCtx(), invoice.getC_PaymentTerm_ID(), invoice.get_TrxName());
 		zugFerdInvoice.setPaymentTermDescription(paymentTerm.get_Translation("Name", language, false, true));
 		zugFerdInvoice.setIssueDate(invoice.getDateInvoiced());
-		zugFerdInvoice.setDeliveryDate(invoice.getDateInvoiced());
+		if(isCollectiveInvoice(invoice)){
+			zugFerdInvoice.setDetailedDeliveryPeriod(getMovementDateFirst(invoice), getMovementDateLast(invoice));
+		} else if(getMovementDateLast(invoice)!= null){
+			zugFerdInvoice.setDeliveryDate(getMovementDateLast(invoice));
+		} else {
+			zugFerdInvoice.setDeliveryDate(invoice.getDateInvoiced());
+		}
 		zugFerdInvoice.setNumber(invoice.getDocumentNo());
 
 		MOrg org = new MOrg(Env.getCtx(), invoice.getAD_Org_ID(), null);
@@ -343,6 +350,9 @@ public class ZugFerdGenerator {
 				item.setPrice(invoiceLine.getPriceActual());
 				item.setTax(invoiceLine.getTaxAmt());
 				item.setLineTotalAmount(invoiceLine.getLineTotalAmt());
+				if(isCollectiveInvoice(invoice) && (invoiceLine.getM_InOutLine_ID()>0)){
+					item.setDetailedDeliveryPeriod(getMovementDate(invoiceLine), getMovementDate(invoiceLine));
+				}
 				zugFerdInvoice.addItem(item);
 			} else if (invoiceLine.getC_Charge_ID() > 0) {
 
@@ -362,6 +372,9 @@ public class ZugFerdGenerator {
 				item.setPrice(invoiceLine.getPriceActual());
 				item.setTax(invoiceLine.getTaxAmt());
 				item.setLineTotalAmount(invoiceLine.getLineTotalAmt());
+				if(isCollectiveInvoice(invoice) && (invoiceLine.getM_InOutLine_ID()>0)){
+					item.setDetailedDeliveryPeriod(getMovementDate(invoiceLine), getMovementDate(invoiceLine));
+				}
 				zugFerdInvoice.addItem(item);
 			}
 		}
@@ -454,6 +467,78 @@ public class ZugFerdGenerator {
 	 */
 	private String safeString(String value) {
 	    return Util.isEmpty(value, true) ? "" : value;
+	}
+
+	private Boolean isCollectiveInvoice(MInvoice invoice) {
+		
+		String sql ="SELECT COUNT(MOVEMENTDATE) FROM\n"
+				+ "(SELECT\n"
+				+ "	IO.MOVEMENTDATE\n"
+				+ "FROM\n"
+				+ "	M_INOUTLINE IOL\n"
+				+ "	  JOIN C_INVOICELINE IL ON IL.M_INOUTLINE_ID = IOL.M_INOUTLINE_ID\n"
+				+ "	  JOIN M_INOUT IO ON IO.M_INOUT_ID = IOL.M_INOUT_ID\n"
+				+ "WHERE\n"
+				+ " IL.C_INVOICE_ID = ?\n"
+				+ "GROUP BY\n"
+				+ "	IO.MOVEMENTDATE\n)";
+				
+		Integer ret = DB.getSQLValue(null, sql, invoice.getC_Invoice_ID());
+		
+		return (ret>1)?true:false;
+		
+	}
+
+	private Timestamp getMovementDateFirst(MInvoice invoice) {
+		
+		String sql ="SELECT\n"
+				+ "	MIN(IO.MOVEMENTDATE)\n"
+				+ "FROM\n"
+				+ "	M_INOUTLINE IOL\n"
+				+ "	JOIN C_INVOICELINE IL ON IL.M_INOUTLINE_ID = IOL.M_INOUTLINE_ID\n"
+				+ "	JOIN M_INOUT IO ON IO.M_INOUT_ID = IOL.M_INOUT_ID\n"
+				+ "WHERE\n"
+				+ "	IL.C_INVOICE_ID = ?\n"
+				+ "GROUP BY\n"
+				+ "	IO.MOVEMENTDATE";
+		
+		Timestamp MovementDateFirst = DB.getSQLValueTS(null, sql, invoice.getC_Invoice_ID());
+		
+		return MovementDateFirst;
+	}
+
+	private Timestamp getMovementDateLast(MInvoice invoice) {
+
+		String sql ="SELECT\n"
+				+ "	MAX(IO.MOVEMENTDATE)\n"
+				+ "FROM\n"
+				+ "	M_INOUTLINE IOL\n"
+				+ "	JOIN C_INVOICELINE IL ON IL.M_INOUTLINE_ID = IOL.M_INOUTLINE_ID\n"
+				+ "	JOIN M_INOUT IO ON IO.M_INOUT_ID = IOL.M_INOUT_ID\n"
+				+ "WHERE\n"
+				+ "	IL.C_INVOICE_ID = ?\n"
+				+ "GROUP BY\n"
+				+ "	IO.MOVEMENTDATE";
+		
+		Timestamp MovementDateLast = DB.getSQLValueTS(null, sql, invoice.getC_Invoice_ID());
+		
+		return MovementDateLast;
+	}
+	
+	private Timestamp getMovementDate(MInvoiceLine line) {
+
+		String sql ="SELECT\n"
+				+ "	IO.MOVEMENTDATE\n"
+				+ "FROM\n"
+				+ "	M_INOUTLINE IOL\n"
+				+ "	JOIN C_INVOICELINE IL ON IL.M_INOUTLINE_ID = IOL.M_INOUTLINE_ID\n"
+				+ "	JOIN M_INOUT IO ON IO.M_INOUT_ID = IOL.M_INOUT_ID\n"
+				+ "WHERE\n"
+				+ "	IL.C_INVOICELINE_ID = ?";
+		
+		Timestamp MovementDateLast = DB.getSQLValueTS(null, sql, line.getC_InvoiceLine_ID());
+		
+		return MovementDateLast;
 	}
 
 }
