@@ -205,7 +205,7 @@ public class ZUGFeRD extends SvrProcess {
     	Timestamp discountdate = null;
     	
     	patdiscountterms(MInvoice minv) {
-    		
+    		this.inv=minv;
     	}    	
 
 		@Override
