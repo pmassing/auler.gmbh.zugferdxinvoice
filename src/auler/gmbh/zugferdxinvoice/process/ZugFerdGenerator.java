@@ -46,6 +46,7 @@ import org.compiere.model.MOrg;
 import org.compiere.model.MOrgInfo;
 import org.compiere.model.MPaymentTerm;
 import org.compiere.model.MProduct;
+import org.compiere.model.MProject;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.MTax;
 import org.compiere.model.MUOM;
@@ -221,6 +222,11 @@ public class ZugFerdGenerator {
 
 		zugFerdInvoice.setPaymentTermDescription(pt.getDescription());
 		zugFerdInvoice.setIssueDate(invoice.getDateInvoiced());
+		if(invoice.getC_Project_ID()>0) {
+			MProject project = new MProject(Env.getCtx(), invoice.getC_Project_ID(), invoice.get_TrxName());		
+			zugFerdInvoice.setSpecifiedProcuringProjectID(project.getValue());
+			zugFerdInvoice.setSpecifiedProcuringProjectName(project.getName());
+		}
 		if(isCollectiveInvoice(invoice)){
 			zugFerdInvoice.setDetailedDeliveryPeriod(getMovementDateFirst(invoice), getMovementDateLast(invoice));
 		} else if(getMovementDateLast(invoice)!= null){
