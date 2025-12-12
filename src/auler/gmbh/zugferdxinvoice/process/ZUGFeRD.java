@@ -159,8 +159,8 @@ public class ZUGFeRD extends SvrProcess {
     	    	MPaymentTerm paymentTerm = new MPaymentTerm(inv.getCtx(), inv.getC_PaymentTerm_ID(), inv.get_TrxName());
     			if(paymentTerm.getDiscount().compareTo(Env.ZERO)>0)
     				pt = new patdiscountterms(inv);
-    			else
-    				duedate = DB.getSQLValueTSEx(inv.get_TrxName(), sqlduedate, inv.getC_PaymentTerm_ID(), inv.getDateInvoiced());
+    			
+    			duedate = DB.getSQLValueTSEx(inv.get_TrxName(), sqlduedate, inv.getC_PaymentTerm_ID(), inv.getDateInvoiced());
     		}
  		
     	}

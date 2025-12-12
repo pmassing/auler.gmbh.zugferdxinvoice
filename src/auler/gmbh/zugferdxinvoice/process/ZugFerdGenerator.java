@@ -214,13 +214,12 @@ public class ZugFerdGenerator {
 		MUser invoiceUser = MUser.get(invoice.getAD_User_ID());
 
 		patpaymentterms pt = new patpaymentterms(invoice, language);
-		zugFerdInvoice.setPaymentTerms(pt);
+//		zugFerdInvoice.setPaymentTerms(pt);
 
 		Timestamp duedate = (Timestamp) pt.getDueDate();
 		zugFerdInvoice.setDueDate(duedate);
 
-		MPaymentTerm paymentTerm = new MPaymentTerm(Env.getCtx(), invoice.getC_PaymentTerm_ID(), invoice.get_TrxName());
-		zugFerdInvoice.setPaymentTermDescription(paymentTerm.get_Translation("Name", language, false, true));
+		zugFerdInvoice.setPaymentTermDescription(pt.getDescription());
 		zugFerdInvoice.setIssueDate(invoice.getDateInvoiced());
 		if(isCollectiveInvoice(invoice)){
 			zugFerdInvoice.setDetailedDeliveryPeriod(getMovementDateFirst(invoice), getMovementDateLast(invoice));
