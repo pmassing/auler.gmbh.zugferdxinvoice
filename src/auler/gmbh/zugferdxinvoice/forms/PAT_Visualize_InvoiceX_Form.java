@@ -161,6 +161,7 @@ public class PAT_Visualize_InvoiceX_Form extends Window implements EventListener
 		
 
 		LayoutUtils.addSclass("dialog-footer", confirmPanel);
+		confirmPanel.getButton("Cancel").setVisible(false);
 		confirmPanel.addActionListener(this);
 		south.appendChild(confirmPanel);
 
