@@ -42,6 +42,7 @@ import org.compiere.model.MDocType;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MLocation;
+import org.compiere.model.MOrder;
 import org.compiere.model.MOrg;
 import org.compiere.model.MOrgInfo;
 import org.compiere.model.MPaymentTerm;
@@ -226,6 +227,10 @@ public class ZugFerdGenerator {
 			MProject project = new MProject(Env.getCtx(), invoice.getC_Project_ID(), invoice.get_TrxName());		
 			zugFerdInvoice.setSpecifiedProcuringProjectID(project.getValue());
 			zugFerdInvoice.setSpecifiedProcuringProjectName(project.getName());
+		}
+		if(invoice.getC_Order_ID()>0) {
+			MOrder order = new MOrder(Env.getCtx(), invoice.getC_Order_ID(), invoice.get_TrxName());
+			zugFerdInvoice.setSellerOrderReferencedDocumentID(order.getDocumentNo());
 		}
 		if(isCollectiveInvoice(invoice)){
 			zugFerdInvoice.setDetailedDeliveryPeriod(getMovementDateFirst(invoice), getMovementDateLast(invoice));
