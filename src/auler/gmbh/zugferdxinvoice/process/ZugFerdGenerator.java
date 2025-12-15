@@ -292,7 +292,9 @@ public class ZugFerdGenerator {
 
 		//Leitweg-ID
 		zugFerdInvoice.setReferenceNumber(getReferenceNo());
-		zugFerdInvoice.setBuyerOrderReferencedDocumentID(invoice.getPOReference());
+		
+		if (!Util.isEmpty(invoice.getPOReference()))
+			zugFerdInvoice.setBuyerOrderReferencedDocumentID(invoice.getPOReference());
 	}
 	
 	private String generateAddressString(MLocation location) {
