@@ -43,7 +43,6 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.mustangproject.Invoice;
 import org.mustangproject.ZUGFeRD.ZUGFeRDImporter;
-import org.mustangproject.ZUGFeRD.ZUGFeRDInvoiceImporter;
 import org.mustangproject.ZUGFeRD.ZUGFeRDVisualizer;
 import org.mustangproject.ZUGFeRD.ZUGFeRDVisualizer.Language;
 import org.zkoss.util.media.AMedia;
