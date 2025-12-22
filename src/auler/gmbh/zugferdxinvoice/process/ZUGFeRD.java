@@ -63,6 +63,8 @@ public class ZUGFeRD extends SvrProcess {
 
 	MInvoice m_invoice = null;
 	boolean isXRechnung = false;
+	boolean isUBLXRechnung = false;
+	String ublversion = null;
     CLogger log = CLogger.getCLogger(ZUGFeRD.class);
     
 	List<ProcessInfoParameter>  paraInvoiceX = new ArrayList<ProcessInfoParameter>();;
@@ -104,6 +106,8 @@ public class ZUGFeRD extends SvrProcess {
 	private void setIsXRechnungBasedOnBusinessPartner() {
 		MBPartner businessPartner = MBPartner.get(getCtx(), m_invoice.getC_BPartner_ID());
 		isXRechnung = businessPartner.get_ValueAsBoolean("BXS_IsXRechnung");
+		isUBLXRechnung = businessPartner.get_ValueAsBoolean("PAT_IsUBLXRechnung");
+		ublversion = businessPartner.get_ValueAsString("PAT_UBLVersion");
 	}
 	
 	// #2 Run printprocess
@@ -139,7 +143,7 @@ public class ZUGFeRD extends SvrProcess {
     	if (!isXRechnung)
     		zugFerdGenerator.generateAndEmbeddXML(printfile);
     	else
-    		zugFerdGenerator.generateAndSaveXRechnungXML();
+    		zugFerdGenerator.generateAndSaveXRechnungXML(isUBLXRechnung, ublversion);
     }
     
     

@@ -44,6 +44,9 @@ public class ZUGFeRDFileExport extends SvrProcess {
 		
 		MBPartner businessPartner = MBPartner.get(getCtx(), invoice.getC_BPartner_ID());
 		boolean isXRechnung = businessPartner.get_ValueAsBoolean("BXS_IsXRechnung");
+		boolean isUBLXRechnung = businessPartner.get_ValueAsBoolean("PAT_IsUBLXRechnung");
+		String ublversion = businessPartner.get_ValueAsString("PAT_UBLVersion");
+		
 		File printfile = null;
 		
 		if (!isXRechnung) 
@@ -70,10 +73,13 @@ public class ZUGFeRDFileExport extends SvrProcess {
     	if(!zugFerdGenerator.isValidBankDetail())
     		throw new AdempiereException("@PAT_InvalidBank@");
    	
-    	if (!isXRechnung)
+    	if (!isXRechnung) {
     		zugFerdGenerator.generateZugFerdXML(printfile);
-    	else
-    		printfile = zugFerdGenerator.generateXRechnungXML();
+    	} else if(isUBLXRechnung) {
+    		zugFerdGenerator.generateXRechnungXML(true, ublversion);
+    	} else {
+    		printfile = zugFerdGenerator.generateXRechnungXML(false,"");
+    	}
     	
     	ProcessInfo pi = getProcessInfo();
     	pi.setExportFile(printfile);

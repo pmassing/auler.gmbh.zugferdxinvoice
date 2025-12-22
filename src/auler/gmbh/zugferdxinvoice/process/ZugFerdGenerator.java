@@ -25,6 +25,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Serializable;
 import java.sql.Timestamp;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -74,8 +75,20 @@ import org.mustangproject.ZUGFeRD.Profiles;
 import org.mustangproject.ZUGFeRD.ZUGFeRD2PullProvider;
 import org.mustangproject.ZUGFeRD.ZUGFeRDExporterFromA1;
 
+import com.helger.commons.error.list.ErrorList;
+import com.helger.en16931.cii2ubl.CIIToUBL21Converter;
+import com.helger.en16931.cii2ubl.CIIToUBL22Converter;
+import com.helger.en16931.cii2ubl.CIIToUBL23Converter;
+import com.helger.en16931.cii2ubl.CIIToUBL24Converter;
+import com.helger.ubl21.UBL21Marshaller;
+import com.helger.ubl22.UBL22Marshaller;
+import com.helger.ubl23.UBL23Marshaller;
+import com.helger.ubl24.UBL24Marshaller;
+
 import auler.gmbh.zugferdxinvoice.process.ZUGFeRD.patpaymentterms;
 import auler.gmbh.zugferdxinvoice.utils.FileHelper;
+
+
 
 public class ZugFerdGenerator {
 
@@ -148,23 +161,23 @@ public class ZugFerdGenerator {
 				bank.getSwiftCode() != null && bank.getName() != null;
 	}
 	
-	public void generateAndSaveXRechnungXML() throws IOException {
-		File file = generateXRechnungXML();
+	public void generateAndSaveXRechnungXML(Boolean useubl, String ublversion) throws IOException {
+		File file = generateXRechnungXML(useubl, ublversion);
 		saveFileInSystem(file);
 	}
 	
-	public File generateXRechnungXML() throws IOException {
+	public File generateXRechnungXML(Boolean useubl, String ublversion) throws IOException {
 		if (Util.isEmpty(getReferenceNo())) {
 			throw new AdempiereException("Leitweg-ID is mandatory for XRechnung");
 		}
 		Invoice zugFerdInvoice = generateZUGFeRDInvoice();
-
 		ZUGFeRD2PullProvider zf2p = new ZUGFeRD2PullProvider();
 		zf2p.setProfile(Profiles.getByName("XRechnung"));
 		zf2p.generateXML(zugFerdInvoice);
 		String theXML = new String(zf2p.getXML());
 		String fileName = FileHelper.getDefaultFileName(invoice, "xml");
 		File outputFile = FileUtil.createFile(fileName);
+		
 		BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
 		try {
 			writer.write(theXML);
@@ -173,10 +186,45 @@ public class ZugFerdGenerator {
 		} finally {
 			writer.close();
 		}
+
+		// Convert to UBL
+		if(useubl) {
+			 Serializable ubloutput= null;
+			 ErrorList errorlist = new ErrorList();
+			if(ublversion.equals("UBL2.1")) {
+				final CIIToUBL21Converter cc21 = new CIIToUBL21Converter();
+				ubloutput = cc21.convertCIItoUBL(outputFile, errorlist);
+				   UBL21Marshaller.invoice ()
+				   .setFormattedOutput (true)
+				   .write ((oasis.names.specification.ubl.schema.xsd.invoice_21.InvoiceType) ubloutput, outputFile);
+			}
+			if(ublversion.equals("UBL2.2")) {
+				final CIIToUBL22Converter cc22 = new CIIToUBL22Converter();
+				ubloutput = cc22.convertCIItoUBL(outputFile, errorlist);
+				   UBL22Marshaller.invoice ()
+				   .setFormattedOutput (true)
+				   .write ((oasis.names.specification.ubl.schema.xsd.invoice_22.InvoiceType) ubloutput, outputFile);
+			}
+			if(ublversion.equals("UBL2.3")) {
+				final CIIToUBL23Converter cc23 = new CIIToUBL23Converter();
+				ubloutput = cc23.convertCIItoUBL(outputFile, errorlist);
+				   UBL23Marshaller.invoice ()
+				   .setFormattedOutput (true)
+				   .write ((oasis.names.specification.ubl.schema.xsd.invoice_23.InvoiceType) ubloutput, outputFile);
+			}
+			if(ublversion.equals("UBL2.4")) {
+				final CIIToUBL24Converter cc24 = new CIIToUBL24Converter();
+				ubloutput = cc24.convertCIItoUBL(outputFile, errorlist);
+				   UBL24Marshaller.invoice ()
+				   .setFormattedOutput (true)
+				   .write ((oasis.names.specification.ubl.schema.xsd.invoice_24.InvoiceType) ubloutput, outputFile);
+			}
+
+		}	
 		
 		return outputFile;
 	}
-
+	
 	public void generateAndEmbeddXML(File pdfFile) throws IOException {
 		generateZugFerdXML(pdfFile);
 		savePdfFile(pdfFile);
