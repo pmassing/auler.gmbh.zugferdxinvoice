@@ -252,7 +252,6 @@ public class ZugFerdGenerator {
 
 	private void generateHeader(Invoice zugFerdInvoice) {
 		MClient client = MClient.get(Env.getAD_Client_ID(Env.getCtx()));
-		MUser invoiceUser = MUser.get(invoice.getAD_User_ID());
 
 		patpaymentterms pt = new patpaymentterms(invoice, language);
 //		zugFerdInvoice.setPaymentTerms(pt);
@@ -289,18 +288,20 @@ public class ZugFerdGenerator {
 
 		MCountry orgCountry = MCountry.get(orgLocation.getC_Country_ID());
 		TradeParty tradePartySender = new TradeParty(client.getName(), 
-				addressSender, 
-				orgLocation.getPostal(), 
-				orgLocation.getCity(), 
+				addressSender,
+				nullIfEmpty(orgLocation.getPostal()),
+				nullIfEmpty(orgLocation.getCity()),
 				orgCountry.getCountryCode());
 
-		tradePartySender.addVATID(org.getInfo().getTaxID());
+		if (!Util.isEmpty(org.getInfo().getTaxID(), true))
+			tradePartySender.addVATID(org.getInfo().getTaxID());
 
-		Contact sellerContact = new Contact(org.getName(), 
-				safeString(orgInfo.getPhone()),
-				safeString(orgInfo.getEMail()));
+		Contact sellerContact = new Contact(nullIfEmpty(org.getName()),
+				nullIfEmpty(orgInfo.getPhone()),
+				nullIfEmpty(orgInfo.getEMail()));
 		tradePartySender.setContact(sellerContact);
-		tradePartySender.setEmail(safeString(orgInfo.getEMail()));
+		if (!Util.isEmpty(orgInfo.getEMail(), true))
+			tradePartySender.setEmail(orgInfo.getEMail());
 
 		BankDetails bankd = new BankDetails(bankAccount.getIBAN(), bank.getSwiftCode());
 		bankd.setAccountName(bank.getName());
@@ -317,16 +318,21 @@ public class ZugFerdGenerator {
 				bp.getName()
 				+ safeString(bp.getName2()),
 				addressRecipient,
-				safeString(location.getPostal()),
-				safeString(location.getCity()),
-				safeString(bpCountry.getCountryCode()));
-		tradePartyRecipient.addVATID(bp.getTaxID());
+				nullIfEmpty(location.getPostal()),
+				nullIfEmpty(location.getCity()),
+				nullIfEmpty(bpCountry.getCountryCode()));
+		if (!Util.isEmpty(bp.getTaxID(), true))
+			tradePartyRecipient.addVATID(bp.getTaxID());
 
-		Contact contact = new Contact(safeString(invoiceUser.getName()), 
-				safeString(invoiceUser.getPhone()),
-				safeString(invoiceUser.getEMail()));
-		tradePartyRecipient.setContact(contact);
-		tradePartyRecipient.setEmail(safeString(invoiceUser.getEMail()));
+		if (invoice.getAD_User_ID() > 0) {
+			MUser invoiceUser = MUser.get(invoice.getAD_User_ID());
+			Contact contact = new Contact(nullIfEmpty(invoiceUser.getName()),
+					nullIfEmpty(invoiceUser.getPhone()),
+					nullIfEmpty(invoiceUser.getEMail()));
+			tradePartyRecipient.setContact(contact);
+			if (!Util.isEmpty(invoiceUser.getEMail(), true))
+				tradePartyRecipient.setEmail(invoiceUser.getEMail());
+		}
 
 		zugFerdInvoice.setSender(tradePartySender);
 		zugFerdInvoice.setRecipient(tradePartyRecipient);
@@ -543,6 +549,18 @@ public class ZugFerdGenerator {
 	 */
 	private String safeString(String value) {
 	    return Util.isEmpty(value, true) ? "" : value;
+	}
+
+	/**
+	 * Returns the string value of the input or null if it is empty.
+	 * mustangproject only checks these values for null, so an empty string
+	 * is written as an empty XML element, which is not allowed
+	 * (PEPPOL-EN16931-R008 - Document MUST not contain empty elements)
+	 * @param value the value to convert
+	 * @return the string value or null if empty
+	 */
+	private String nullIfEmpty(String value) {
+	    return Util.isEmpty(value, true) ? null : value;
 	}
 
 	private Boolean isCollectiveInvoice(MInvoice invoice) {
